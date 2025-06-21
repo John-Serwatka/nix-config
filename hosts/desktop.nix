@@ -10,7 +10,6 @@
     })
   ];
 
-  systemd.defaultTarget = "graphical.target";
 
   networking.hostName = "desktop";
   services.xserver.videoDrivers = [ "nvidia" ];
