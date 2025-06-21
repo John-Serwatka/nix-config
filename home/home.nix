@@ -3,14 +3,16 @@
 {
   home.username = "withrin";
   home.homeDirectory = "/home/withrin";
+  home.stateVersion = "24.05";
 
-  programs.git.enable = true;
+  nixpkgs.config.allowUnfree = true;
+
   programs.zsh.enable = true;
   programs.bash.enable = true;
 
   # Add more shared apps/settings here
   home.packages = with pkgs; [
-    kate
+    kdePackages.kate
     brave
     spotify
     discord
@@ -25,10 +27,9 @@
     enable = true;
     userName = "withriin";
     userEmail = "johnchrisserwatka@gmail.com";
-  }
+  };
 
-  programs.zsh.enable = true;
-  programs.bash.enable = true;
+
 
     # KDE-related config (optional; KDE is usually managed system-wide but you can set dotfiles here)
   # programs.kdeconnect.enable = true;
