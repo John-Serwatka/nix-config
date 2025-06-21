@@ -12,6 +12,10 @@
 
 
   networking.hostName = "desktop";
+
+  boot.kernelPackages = pkgs.linuxPackages_latest;
+  hardware.nvidia.open = false;
+  hardware.opengl.enable = true;
   services.xserver.videoDrivers = [ "nvidia" ];
 
   mySyncthing = {
@@ -25,7 +29,6 @@
   boot.loader.grub.enable = true;
   boot.loader.grub.devices = [ "/dev/sda" ]; # Adjust as needed
 
-  hardware.nvidia.open = true;
 
   system.stateVersion = "25.05";
 }
