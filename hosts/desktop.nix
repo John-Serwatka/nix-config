@@ -1,17 +1,18 @@
-{ config, pkgs, ... }:
+{ config, pkgs, lib, ... }:
 
 {
-  # Import hardware config for this host
   imports = [
     ./hardware-configuration.nix
-    ../modules/syncthing.nix  # Custom system-level module
+    (import ../modules/syncthing.nix {
+      inherit config pkgs lib;
+      syncthingUser = "withrin";
+      syncthingDataDir = "/home/withrin/.config/syncthing";
+    })
   ];
 
-  # Host-specific system settings
   networking.hostName = "desktop";
   services.xserver.videoDrivers = [ "nvidia" ];
 
-  # Enable and parameterize Syncthing service (via your module)
   mySyncthing = {
     enable = true;
     guiUser = "admin";
@@ -19,6 +20,11 @@
     guiAddress = "127.0.0.1:8384";
   };
 
-  # Required for system upgrades, rollbacks, etc.
+  boot.loader.systemd-boot.enable = false;
+  boot.loader.grub.enable = true;
+  boot.loader.grub.devices = [ "/dev/sda" ]; # Adjust as needed
+
+  hardware.nvidia.open = true;
+
   system.stateVersion = "25.05";
 }

@@ -1,34 +1,22 @@
-# home/home.nix — Shared user config for all hosts
-
 { config, pkgs, ... }:
 
 {
   home.username = "withrin";
   home.homeDirectory = "/home/withrin";
   home.stateVersion = "24.05";
-
+  home.sessionPath = [ "$HOME/bin" ];
   nixpkgs.config.allowUnfree = true;
 
   programs.git = {
     enable = true;
     userName = "withriin";
     userEmail = "johnchrisserwatka@gmail.com";
+    bash = true;
   };
 
-  programs.zsh.enable = true;
   programs.bash.enable = true;
 
-  home.packages = with pkgs; [
-    kdePackages.kate
-    brave
-    spotify
-    discord
-    neovim
-    git
-    wget
-    prismlauncher
-    # Add more common packages here!
-  ];
+  home.packages = import ./shared-packages.nix { inherit pkgs;};
 
-  # You can add more shared config here, like dotfiles, aliases, shell theme, etc.
+  # Add more shared user config here (dotfiles, aliases, etc.)
 }
