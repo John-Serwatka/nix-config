@@ -13,9 +13,14 @@
 
   networking.hostName = "desktop";
 
-  boot.kernelPackages = pkgs.linuxPackages_latest;
-  hardware.nvidia.open = false;
-  hardware.opengl.enable = true;
+  hardware.nvidia = {
+    package = config.boot.kernelPackages.nvidiaPackages.production;
+    open = false;
+    modesetting.enable = true;
+    nvidiaSettings = true;
+  }
+
+  hardware.graphics.enable = true;
   services.xserver.videoDrivers = [ "nvidia" ];
 
   mySyncthing = {
