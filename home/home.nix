@@ -11,7 +11,6 @@
     enable = true;
     userName = "withriin";
     userEmail = "johnchrisserwatka@gmail.com";
-    bash = true;
   };
 
   programs.bash.enable = true;
