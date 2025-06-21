@@ -1,5 +1,5 @@
 {
-  description = "Portable, modular Home Manager flake";
+  description = "Multi-host NixOS system with Home Manager module (system-agnostic style, per-host user config)";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -8,20 +8,23 @@
   };
 
   outputs = { self, nixpkgs, home-manager, ... }: {
-    homeConfigurations = {
-      withrin-desktop = home-manager.lib.homeManagerConfiguration {
-        pkgs = nixpkgs.legacyPackages.x86_64-linux;
+    nixosConfigurations = {
+      desktop = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
         modules = [
-          ./home/home.nix
-          ./hosts/desktop.nix
+          ./modules/shared.nix         # Shared system config for all hosts
+          ./hosts/desktop.nix          # Desktop-specific system config
+          home-manager.nixosModules.home-manager
+          { home-manager.users.withrin = import ./home/desktop.nix; }  # Desktop user config
         ];
-        # Extra args if needed
       };
-      withrin-laptop = home-manager.lib.homeManagerConfiguration {
-        pkgs = nixpkgs.legacyPackages.x86_64-linux;
+      laptop = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
         modules = [
-          ./home/home.nix
+          ./modules/shared.nix
           ./hosts/laptop.nix
+          home-manager.nixosModules.home-manager
+          { home-manager.users.withrin = import ./home/laptop.nix; }   # Laptop user config
         ];
       };
     };
