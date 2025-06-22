@@ -11,4 +11,5 @@ with pkgs; [
   wget
   prismlauncher
   steam
+  obsidian
 ]
