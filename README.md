@@ -2,6 +2,11 @@
 
 This flake contains a multi-host NixOS configuration with Home Manager.
 
+## Formatting
+
+Run `nix fmt` to format all Nix files in the repository using the Alejandra
+formatter provided by this flake.
+
 ## Spotify via Flatpak
 
 If you prefer running Spotify through Flatpak, make sure the Flatpak
