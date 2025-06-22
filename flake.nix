@@ -7,7 +7,7 @@
 
     # Unstable nix CLI, pinned to the same nixpkgs
     nixUnstable.url = "github:NixOS/nixpkgs/nixos-unstable";
-    nixUnstable.inputs.nixpkgs.follows = "nixpkgs";
+    #nixUnstable.inputs.nixpkgs.follows = "nixpkgs";
 
     # Home Manager
     home-manager.url = "github:nix-community/home-manager";
