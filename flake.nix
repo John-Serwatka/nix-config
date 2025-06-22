@@ -20,6 +20,7 @@
     pkgs   = import nixpkgs { inherit system; };
   in
   {
+    formatter.${system} = pkgs.alejandra;
     # Your existing NixOS hosts
     nixosConfigurations = {
       desktop = nixpkgs.lib.nixosSystem {
