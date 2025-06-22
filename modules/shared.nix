@@ -35,6 +35,9 @@
     pulse.enable = true;
   };
 
+  # Allow Flatpak applications, e.g. for Spotify installation
+  services.flatpak.enable = true;
+
   services.xserver.enable = true;
   services.displayManager.sddm.enable = true;
   services.desktopManager.plasma6.enable = true;
