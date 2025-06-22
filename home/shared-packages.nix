@@ -10,4 +10,5 @@ with pkgs; [
   git
   wget
   prismlauncher
+  steam
 ]

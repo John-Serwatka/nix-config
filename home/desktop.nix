@@ -1,10 +1,10 @@
- { config, pkgs, ... }:
+# home/desktop.nix
+{ config, pkgs, ... }:
 
- {
+{
+  imports = [ ./home.nix ];       # pick up username, shells, etc.
 
-  imports = [ ./home.nix ];
-
-  # Now override `home.packages` by concatenating shared + desktop-only:
+  # Set *exactly* one* home.packages* here:
   home.packages = (import ./shared-packages.nix { inherit pkgs; })
                ++ (with pkgs; [
                     ckb-next
@@ -12,5 +12,5 @@
                     libratbag
                  ]);
 
-  # Any other desktop-specific Home Manager options go here
+  # Any other desktop‐only HM config goes here…
 }
