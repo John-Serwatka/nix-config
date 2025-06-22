@@ -20,6 +20,11 @@
     nvidiaSettings = true;
   };
 
+  hardware.opengl = {
+    enable = true;
+    driSupport32Bit = true;
+  };
+
   hardware.graphics.enable = true;
   services.xserver.videoDrivers = [ "nvidia" ];
 
@@ -51,6 +56,8 @@
 #    config.hardware.nvidia.package
 #    config.hardware.nvidia.package.bin
  #   ];
+
+  programs.steam.enable = true;
 
   system.stateVersion = "25.05";
 }
