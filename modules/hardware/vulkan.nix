@@ -19,5 +19,8 @@
       # if you want validation layers:
       # vulkan-validate-layers
     ];
+    environment.systemPackages = with pkgs; [
+      vulkan-tools
+  ];
 }
 
