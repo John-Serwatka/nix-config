@@ -12,7 +12,7 @@
     hardware.graphics.enable32Bit = true;
 
     # extra packages for Vulkan tooling and loaders
-    extraPackages = with pkgs; [
+    hardware.graphics.extraPackages = with pkgs; [
       vulkan-loader
       vulkan-tools        # includes vulkaninfo, etc.
       vulkan-headers
