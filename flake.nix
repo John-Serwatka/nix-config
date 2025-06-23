@@ -28,7 +28,7 @@
         inherit system;
         modules = [
           ./hosts/laptop.nix
-          { home-manager.users.withrin = import ./users/withrin.nix; }
+          { home-manager.users.withrin = import ./home-manager/withrin.nix; }
           home-manager.nixosModules.home-manager
 
         ];
