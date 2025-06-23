@@ -1,11 +1,16 @@
 # modules/services/flatpak.nix
-{ config, ... }:
+{ config, pkgs, ... }:
 
 {
-  services.flatpak.enable   = true;
-  xdg.portal.enable         = true;
-  xdg.portal.extraPortals   = with pkgs; [ kdePackages.xdg-desktop-portal-kde ];
+  services.flatpak.enable = true;
 
-+ # Keep <1.17 behavior: use the first portal implementation found
-+ xdg.portal.config.common.default = "*";
+  # enable XDG desktop portals…
+  xdg.portal.enable = true;
+
+  # …and install the KDE portal to back it
+  xdg.portal.extraPortals = with pkgs; [
+    kdePackages.xdg-desktop-portal-kde
+  ];
+
+  xdg.portal.config.common.default = "*";
 }

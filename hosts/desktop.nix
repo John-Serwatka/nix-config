@@ -16,6 +16,7 @@
     ../modules/services/flatpak.nix
     ../modules/services/steam.nix
     ../modules/services/syncthing.nix
+    ../modules/services/xserver-plasma.nix
 
     # Graphics
     ../modules/hardware/nvidia.nix
