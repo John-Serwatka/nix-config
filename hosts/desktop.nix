@@ -1,64 +1,43 @@
-{ config, pkgs, lib, ... }:
+# hosts/desktop.nix — desktop-specific system config
+{ config, pkgs, ... }:
 
 {
   imports = [
-    ./hardware-configuration.nix
-#    (import ../modules/syncthing.nix {
-#      inherit config pkgs lib;
-#      syncthingUser = "withrin";
-#      syncthingDataDir = "/home/withrin/.config/syncthing";
-#    })
-  ];
 
+    # Core settings & shared apps
+    ../modules/shared.nix
+    ../modules/bootloader.nix
+    ../modules/apps/base.nix
+
+    # Gaming stack
+    ../modules/apps/games.nix
+
+    # Services
+    ../modules/services/flatpak.nix
+    ../modules/services/steam.nix
+    ../modules/services/syncthing.nix
+
+    # Graphics
+    ../modules/hardware/nvidia.nix
+    ../modules/hardware/vulkan.nix
+
+    # Input devices
+    ../modules/hardware/desktop-input.nix
+
+    # Output devices
+    ../modules/services/audio-pipewire.nix
+
+    # Low-level hardware scan (from your generated config)
+    ./hardware-configuration/desktop-hardware.nix
+  ];
 
   networking.hostName = "desktop";
 
-  hardware.nvidia = {
-    package = config.boot.kernelPackages.nvidiaPackages.stable;
-    open = false;
-    modesetting.enable = true;
-    nvidiaSettings = true;
-  };
-
-#  hardware.opengl = {
-#    enable = true;
-#    driSupport32Bit = true;
-#  };
-
-  hardware.graphics.enable = true;
-  hardware.graphics.enable32Bit = true;
-  services.xserver.videoDrivers = [ "nvidia" ];
-
-#  mySyncthing = {
-#    enable = true;
-#    guiUser = "admin";
-#    guiPassword = "6beRmEkbhRDevQrFAmz*";
-#    guiAddress = "127.0.0.1:8384";
-#  };
-
-  boot.blacklistedKernelModules = [ "nouveau" ];
-  boot.kernelParams = [
-      "modprobe.blacklist=nouveau"
-      "nouveau.modeset=0"
-      "nvidia-drm.modeset=1"
-      "nvidia-drm.fbdev=1"
-    ];
-
-  boot.loader.grub.enable = false;
-  boot.loader.systemd-boot.enable = true;
-#  boot.loader.systemd-boot.enable = true;
-#  boot.loader.grub.enable = false;
-#  boot.loader.grub.efiSupport = true;
-#  boot.loader.grub.efiInstallAsRemovable = true;
-#  boot.loader.grub.devices = [ "/dev/sda" ]; # Adjust as needed
-
-  # Just list the extra packages you need—NixOS will merge them for you
-#  environment.systemPackages = [
-#    config.hardware.nvidia.package
-#    config.hardware.nvidia.package.bin
- #   ];
-
-  programs.steam.enable = true;
-
-  system.stateVersion = "25.05";
+  # Syncthing overrides
+  syncthing.enable      = true;
+  syncthing.user        = "withrin";
+  syncthing.dataDir     = "/home/withrin/.config/syncthing";
+  syncthing.guiUser     = "admin";
+  syncthing.guiPassword = "6beRmEkbhRDevQrFAmz*";
+  syncthing.guiAddress  = "127.0.0.1:8384";
 }

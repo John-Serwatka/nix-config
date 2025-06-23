@@ -1,12 +1,17 @@
+# hosts/laptop.nix — laptop-specific system config
 { config, pkgs, ... }:
 
 {
-  imports = [ ./hardware-configuration.nix ];
+  imports = [
+    ../modules/shared.nix
+    ../modules/apps/base.nix
+    ../modules/apps/games.nix
+    ../modules/services/flatpak.nix
+    ../modules/services/steam.nix
+    ../modules/services/syncthing.nix
+    ../modules/hardware/intel-gpu.nix
+  ];
 
   networking.hostName = "laptop";
-  # Use Intel or AMD driver, not NVIDIA!
-  services.xserver.videoDrivers = [ "modesetting" ];
-
-  # system.stateVersion is *required* for each host!
-  system.stateVersion = "25.05";
+  # add laptop-only options (touchpad, battery, etc.) here
 }
