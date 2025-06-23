@@ -39,6 +39,8 @@
     extraGroups  = [ "wheel" "networkmanager" "input" ];
   };
 
+  system.stateVersion = "25.05";
+
   # Syncthing overrides
   syncthing.enable      = true;
   syncthing.user        = "withrin";

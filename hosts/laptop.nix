@@ -12,6 +12,8 @@
     ../modules/hardware/intel-gpu.nix
   ];
 
+  system.stateVersion = "25.05";
+
   networking.hostName = "laptop";
   # add laptop-only options (touchpad, battery, etc.) here
 }

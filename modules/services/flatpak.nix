@@ -3,4 +3,5 @@
 
 {
   services.flatpak.enable = true;
+  services.xdg.portal.enable = true;
 }
