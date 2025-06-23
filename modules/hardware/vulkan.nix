@@ -19,5 +19,5 @@
       # if you want validation layers:
       # vulkan-validate-layers
     ];
-  };
 }
+
