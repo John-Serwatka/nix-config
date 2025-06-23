@@ -5,7 +5,7 @@
   environment.systemPackages = with pkgs; [
     steam
     lutris
-    proton
+    protonup-rs
     wine
     winetricks
     vkd3d

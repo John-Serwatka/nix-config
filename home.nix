@@ -19,7 +19,7 @@
 
   home.packages = with pkgs; [
     bat
-    exa
+    #exa
     # add more personal CLI tools here
   ];
 }
