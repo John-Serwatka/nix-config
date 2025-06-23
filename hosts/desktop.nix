@@ -28,7 +28,7 @@
     ../modules/services/audio-pipewire.nix
 
     # Low-level hardware scan (from your generated config)
-    ./hardware-configuration/desktop-hardware.nix
+    ./hardware/desktop-hardware.nix
   ];
 
   networking.hostName = "desktop";
