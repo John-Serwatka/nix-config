@@ -10,4 +10,5 @@
     # you can override `package` if you need a specific version:
     # package = pkgs.linuxPackages.nvidia_x11;
   };
+    services.xserver.videoDrivers = [ "nvidia" ];
 }
