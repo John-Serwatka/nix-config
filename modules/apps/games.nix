@@ -1,5 +1,5 @@
 # modules/apps/games.nix
-{ pkgs, … }:
+{ pkgs, ... }:
 
 {
   environment.systemPackages = with pkgs; [

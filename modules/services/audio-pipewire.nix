@@ -1,5 +1,5 @@
 # modules/services/audio-pipewire.nix
-{ config, … }:
+{ config, ... }:
 {
   services.pipewire = {
     enable               = true;
