@@ -1,7 +1,9 @@
-# users/withrin.nix — system user + Home Manager entry
-{ config, pkgs, ... }:
+# home-manager/withrin.nix
+{ config, pkgs, ... }: {
 
-{
-  # pull in all of your shared Home Manager config
-  home-manager.users.withrin = import ../home.nix;
+  # Pin the Home-Manager state version here:
+  home.stateVersion = "24.05";
+
+  # Pull in your shared home config (which may also define programs, packages, etc.)
+  imports = [ ../home.nix ];
 }
