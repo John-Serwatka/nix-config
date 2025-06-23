@@ -33,6 +33,12 @@
 
   networking.hostName = "desktop";
 
+  # ensure the system user exists
+  users.users.withrin = {
+    isNormalUser = true;
+    extraGroups  = [ "wheel" "networkmanager" "input" ];
+  };
+
   # Syncthing overrides
   syncthing.enable      = true;
   syncthing.user        = "withrin";
