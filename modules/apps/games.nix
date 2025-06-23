@@ -5,6 +5,7 @@
   environment.systemPackages = with pkgs; [
     steam
     lutris
+    prismlauncher
     protonup-rs
     wine
     winetricks
