@@ -2,10 +2,13 @@
 { config, pkgs, ... }:
 
 {
-  services.xserver = {
-    enable = true;
-    layout = "us";
-    displayManager.sddm.enable    = true;
-    desktopManager.plasma5.enable = true;
-  };
+  # Enable X11/Wayland support
+  services.xserver.enable = true;
+  services.xserver.layout = "us";
+
+  # Enable SDDM at the correct path
+  services.displayManager.sddm.enable = true;
+
+  # Enable Plasma 6
+  services.desktopManager.plasma6.enable = true;
 }
