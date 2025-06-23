@@ -4,7 +4,7 @@
 {
   # Enable X11/Wayland support
   services.xserver.enable = true;
-  services.xserver.layout = "us";
+  services.xserver.xkb.layout = "us";
 
   # Enable SDDM at the correct path
   services.displayManager.sddm.enable = true;
