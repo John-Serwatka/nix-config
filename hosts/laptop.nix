@@ -41,10 +41,10 @@
         isNormalUser = true;
         extraGroups  = [ "wheel" "networkmanager" "input" ];
   };
-{
+
   services.asusd.enable = true;
   services.asusd.setPerformanceProfile = true;
-}
+
   services.bluetooth = true;
   services.bluetooth.enableGui = true;
 
