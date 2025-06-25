@@ -17,8 +17,11 @@
         ../modules/services/syncthing.nix
         ../modules/services/xserver-plasma.nix
         ../modules/services/asusd.nix
+        ../modules/services/thermald.nix
+        ../modules/services/printing.nix
 
         # Graphics
+        ../modules/hardware/amdgpu.nix
 
         # Input devices
         ../modules/hardware/bluetooth.nix
@@ -28,6 +31,7 @@
         ../modules/services/audio-pipewire.nix
 
         # Low-level hardware scan (from your generated config)
+        ./laptop-hardware.nix
   ];
 
   networking.hostName = "laptop";
@@ -46,6 +50,10 @@
 
   networking.enableManager    = true;
   networking.openTCPPorts     = [ 25565 ];
+
+  services.thermald = true;
+
+  services.printing = true;
 
   system.stateVersion = "25.05";
 

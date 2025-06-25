@@ -6,6 +6,9 @@
   boot.loader.grub.enable         = false;
   boot.loader.systemd-boot.enable = true;
 
+  boot.kernelPackages = pkgs.linuxPackages_latest;
+
+
   # Kernel parameters & blacklists
   boot.blacklistedKernelModules = [ "nouveau" ];
   boot.kernelParams = [
