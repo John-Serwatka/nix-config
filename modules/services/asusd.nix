@@ -5,23 +5,21 @@ with pkgs;
 
 {
   # Option Declarations
-
-  options.services.asusd = lib.mkOption {
-    type = lib.types.bool;
-    default = false;
+  options.services.asusd.enable = lib.mkOption {
+    type        = lib.types.bool;
+    default     = false;
     description = "Enable the ASUS Control Daemon (asusd).";
   };
 
   options.services.asusd.setPerformanceProfile = lib.mkOption {
-    type = lib.types.bool;
-    default = false;
+    type        = lib.types.bool;
+    default     = false;
     description = "At login, set the ASUS profile to 'performance' via a user service.";
   };
 
-
-  # Module Config
+  # Module Config #
   config = lib.recursiveUpdate
-    (lib.mkIf config.services.asusd {
+    (lib.mkIf config.services.asusd.enable {
       systemd.services.asusd = {
         description   = "ASUS Control Daemon";
         wantedBy      = [ "multi-user.target" ];
