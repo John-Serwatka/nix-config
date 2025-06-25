@@ -1,13 +1,16 @@
-{ config, pkgs, lib, ... }:
+# modules/services/printing.nix
+{ config, lib, ... }:
 
 {
-  options.services.printing = lib.mkOption {
+  # Option Declaration  #
+  options.services.printing.enable = lib.mkOption {
     type        = lib.types.bool;
     default     = false;
     description = "Enable CUPS printing service.";
   };
 
-  config = lib.mkIf config.services.printing {
+  # Module Config #
+  config = lib.mkIf config.services.printing.enable {
     services.printing.enable = true;
   };
 }
