@@ -1,5 +1,5 @@
 # modules/bootloader.nix
-{ config, lib, ... }:
+{ config, lib, pkgs,  ... }:
 
 {
   # Disable GRUB, enable systemd-boot
