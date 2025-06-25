@@ -45,7 +45,7 @@
   services.asusd.enable = true;
   services.asusd.setPerformanceProfile = true;
 
-  services.bluetooth = true;
+  services.bluetooth.enable = true;
   services.bluetooth.enableGui = true;
 
   networking.enableManager    = true;

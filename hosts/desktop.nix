@@ -36,7 +36,7 @@
 
   networking.hostName = "desktop";
 
-services.bluetooth = true;
+services.bluetooth.enable = true;
 services.bluetooth.enableGui = true;
 
 networking.enableManager    = true;
