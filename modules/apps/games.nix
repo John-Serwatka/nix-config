@@ -4,10 +4,11 @@
 {
   environment.systemPackages = with pkgs; [
     steam
-    lutris
-    protonup-rs
-    wine
-    winetricks
-    vkd3d
+    prismlauncher
+    #lutris
+    #protonup-rs
+    #wine
+    #winetricks
+    #vkd3d
   ];
 }
