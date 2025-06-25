@@ -21,6 +21,8 @@
         # Graphics
 
         # Input devices
+        ../modules/hardware/bluetooth.nix
+        ../modules/hardware/network-adapter.nix
 
         # Output devices
         ../modules/services/audio-pipewire.nix
@@ -38,6 +40,12 @@
 
   services.asusd = true;
   services.asusd.setPerformanceProfile = true;
+
+  services.bluetooth = true;
+  services.bluetooth.enableGui = true;
+
+  networking.enableManager    = true;
+  networking.openTCPPorts     = [ 25565 ];
 
   system.stateVersion = "25.05";
 

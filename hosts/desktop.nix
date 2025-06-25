@@ -24,6 +24,8 @@
 
     # Input devices
     ../modules/hardware/desktop-input.nix
+    ../modules/hardware/bluetooth.nix
+    ../modules/hardware/network-adapter.nix
 
     # Output devices
     ../modules/services/audio-pipewire.nix
@@ -33,6 +35,12 @@
   ];
 
   networking.hostName = "desktop";
+
+services.bluetooth = true;
+services.bluetooth.enableGui = true;
+
+networking.enableManager    = true;
+networking.openTCPPorts     = [ 25565 ];
 
   # ensure the system user exists
   users.users.withrin = {

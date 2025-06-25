@@ -16,5 +16,5 @@
   ];
 
   # If you need EFI support flags, add them here
-  # boot.loader.efi.canTouchEfiVariables = true;
+   boot.loader.efi.canTouchEfiVariables = true;
 }
