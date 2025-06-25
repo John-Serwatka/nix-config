@@ -24,7 +24,6 @@
 
     # Input devices
     ../modules/hardware/desktop-input.nix
-    ../modules/hardware/bluetooth.nix
     ../modules/hardware/network-adapter.nix
 
     # Output devices
@@ -36,8 +35,8 @@
 
   networking.hostName = "desktop";
 
-services.bluetooth.enable = true;
-services.bluetooth.enableGui = true;
+hardware.bluetooth.enable = true;
+services.blueman.enable  = true;
 
 networking.enableManager    = true;
 networking.openTCPPorts     = [ 25565 ];

@@ -18,13 +18,11 @@
         ../modules/services/xserver-plasma.nix
         ../modules/services/asusd.nix
         ../modules/services/thermald.nix
-        ../modules/services/printing.nix
 
         # Graphics
         ../modules/hardware/amdgpu.nix
 
         # Input devices
-        ../modules/hardware/bluetooth.nix
         ../modules/hardware/network-adapter.nix
 
         # Output devices
@@ -45,15 +43,16 @@
   services.asusd.enable = true;
   services.asusd.setPerformanceProfile = true;
 
-  services.bluetooth.enable = true;
-  services.bluetooth.enableGui = true;
+
+  hardware.bluetooth.enable = true;
+  services.blueman.enable  = true;
 
   networking.enableManager    = true;
   networking.openTCPPorts     = [ 25565 ];
 
-  services.thermald = true;
+  services.printing.enable = true;
 
-  services.printing = true;
+
 
   system.stateVersion = "25.05";
 
