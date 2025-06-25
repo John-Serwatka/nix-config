@@ -5,7 +5,7 @@ with pkgs;
 
 {
   # Option Declarations #
-  options.services.bluetooth = lib.mkOption {
+  options.services.bluetooth.enable = lib.mkOption {
     type = lib.types.bool;
     default = false;
     description = "Enable Bluetooth hardware support and stack.";
