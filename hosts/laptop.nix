@@ -49,6 +49,7 @@
 
   networking.enableManager    = true;
   networking.openTCPPorts     = [ 25565 ];
+  networking.networkmanager.enable = true;
 
   services.printing.enable = true;
 
