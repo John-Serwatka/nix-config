@@ -7,4 +7,5 @@
     alsa.support32Bit    = true;
     pulse.enable         = true;  # gives you a PulseAudio socket for legacy clients
   };
+  security.rtkit.enable = true;
 }

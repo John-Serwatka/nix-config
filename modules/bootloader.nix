@@ -1,10 +1,13 @@
 # modules/bootloader.nix
-{ config, lib, ... }:
+{ config, lib, pkgs,  ... }:
 
 {
   # Disable GRUB, enable systemd-boot
   boot.loader.grub.enable         = false;
   boot.loader.systemd-boot.enable = true;
+
+  boot.kernelPackages = pkgs.linuxPackages_latest;
+
 
   # Kernel parameters & blacklists
   boot.blacklistedKernelModules = [ "nouveau" ];
@@ -16,5 +19,5 @@
   ];
 
   # If you need EFI support flags, add them here
-  # boot.loader.efi.canTouchEfiVariables = true;
+   boot.loader.efi.canTouchEfiVariables = true;
 }
