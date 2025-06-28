@@ -6,6 +6,7 @@
 
   hardware.nvidia = {
     package          = config.boot.kernelPackages.nvidiaPackages.stable;
+    open = true;
     modesetting.enable = true;
     nvidiaSettings     = true;
   };
@@ -13,9 +14,11 @@
   # X server + SDDM on X11 (fallback from Wayland for stability)
   services.xserver = {
     enable = true;
-    displayManager.sddm = {
-      enable  = true;
-      wayland = false;
+    displayManager = {
+        sddm = {
+            enable  = true;
+            wayland = { enable = false; };
+        };
     };
     videoDrivers = [ "nvidia" ];
   };
