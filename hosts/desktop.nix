@@ -38,6 +38,7 @@
 hardware.bluetooth.enable = true;
 services.blueman.enable  = true;
 
+networking.networkManager.enable = true;
 networking.enableManager    = true;
 networking.openTCPPorts     = [ 25565 ];
 
