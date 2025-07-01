@@ -21,5 +21,6 @@
     openjdk21
     firefox
     google-chrome
+    kdePackages.kalarm
   ];
 }
