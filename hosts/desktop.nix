@@ -22,6 +22,11 @@
     ../modules/hardware/nvidia.nix
     ../modules/hardware/vulkan.nix
 
+    # Misc hardware
+    ../modules/hardware/amd-pstate.nix
+    ../modules/hardware/openrgb.nix
+    ../modules/hardware/fancontrol.nix
+
     # Input devices
     ../modules/hardware/desktop-input.nix
     ../modules/hardware/network-adapter.nix
@@ -41,6 +46,10 @@ services.blueman.enable  = true;
 networking.networkmanager.enable = true;
 networking.enableManager    = true;
 networking.openTCPPorts     = [ 25565 ];
+
+hardware.cpu.amd.enablePstate   = true;
+services.openrgb.enable         = true;
+services.fancontrol.enable      = true;
 
   # ensure the system user exists
   users.users.withrin = {

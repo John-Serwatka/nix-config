@@ -22,5 +22,19 @@
     firefox
     google-chrome
     kdePackages.kalarm
+    gnome-pomodoro
+    kdePackages.kaccounts-integration
+    kdePackages.kaccounts-providers
+    kdePackages.akonadi
+    kdePackages.akonadi-mime
+    kdePackages.korganizer
+    kdePackages.kdepim-addons
+    kdePackages.kmail
+    kdePackages.kdepim-runtime
+    rpi-imager
+    usbutils
+    udiskie
+    udisks
+    chromium
   ];
 }
