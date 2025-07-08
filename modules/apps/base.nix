@@ -31,10 +31,13 @@
     kdePackages.kdepim-addons
     kdePackages.kmail
     kdePackages.kdepim-runtime
-    rpi-imager
     usbutils
     udiskie
     udisks
     chromium
+    lm_sensors
+    vlc
+    syncthing
+    syncthingtray
   ];
 }

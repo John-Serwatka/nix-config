@@ -6,10 +6,11 @@
 
   hardware.nvidia = {
     package          = config.boot.kernelPackages.nvidiaPackages.stable;
-    open = true;
-
+    open = false;
+    powerManagement.enable = false;
     modesetting.enable = true;
     nvidiaSettings     = true;
+    forceFullCompositionPipeline = true;
   };
 
   # X server + SDDM on X11 (fallback from Wayland for stability)

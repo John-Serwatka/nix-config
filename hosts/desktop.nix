@@ -15,7 +15,6 @@
     # Services
     ../modules/services/flatpak.nix
     ../modules/services/steam.nix
-    ../modules/services/syncthing.nix
     ../modules/services/xserver-plasma.nix
 
     # Graphics
@@ -25,7 +24,6 @@
     # Misc hardware
     ../modules/hardware/amd-pstate.nix
     ../modules/hardware/openrgb.nix
-    ../modules/hardware/fancontrol.nix
 
     # Input devices
     ../modules/hardware/desktop-input.nix
@@ -38,7 +36,7 @@
     ./desktop-hardware.nix
   ];
 
-  networking.hostName = "desktop";
+networking.hostName = "desktop";
 
 hardware.bluetooth.enable = true;
 services.blueman.enable  = true;
@@ -46,10 +44,6 @@ services.blueman.enable  = true;
 networking.networkmanager.enable = true;
 networking.enableManager    = true;
 networking.openTCPPorts     = [ 25565 ];
-
-hardware.cpu.amd.enablePstate   = true;
-services.openrgb.enable         = true;
-services.fancontrol.enable      = true;
 
   # ensure the system user exists
   users.users.withrin = {
@@ -59,11 +53,26 @@ services.fancontrol.enable      = true;
 
   system.stateVersion = "25.05";
 
-  # Syncthing overrides
-  syncthing.enable      = true;
-  syncthing.user        = "withrin";
-  syncthing.dataDir     = "/home/withrin/.config/syncthing";
-  syncthing.guiUser     = "admin";
-  syncthing.guiPassword = "6beRmEkbhRDevQrFAmz*";
-  syncthing.guiAddress  = "127.0.0.1:8384";
+
+  services.syncthing = {
+    enable           = true;                      # ← start at boot
+    user             = "withrin";                 # run under THIS uid
+    dataDir          = "/home/withrin/Sync";      # where the synced files live
+    configDir        = "/home/withrin/.config/syncthing";
+    openDefaultPorts = true;                      # 22000/TCP+UDP, 21027/UDP
+  };
+
+
+  systemd.user.services.syncthingtray = {
+    description = "Syncthing tray indicator";
+
+    after      = [ "default.target" "syncthing.service" ];
+    wantedBy   = [ "default.target" ];      # auto-start in the session
+
+    serviceConfig = {
+       Type      = "simple";
+       ExecStart = "${pkgs.syncthingtray}/bin/syncthingtray --wait";
+       };
+    };
+
 }

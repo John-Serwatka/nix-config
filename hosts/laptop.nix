@@ -14,7 +14,6 @@
         # Services
         ../modules/services/flatpak.nix
         ../modules/services/steam.nix
-        ../modules/services/syncthing.nix
         ../modules/services/xserver-plasma.nix
         ../modules/services/asusd.nix
         ../modules/services/thermald.nix
@@ -57,13 +56,26 @@
 
   system.stateVersion = "25.05";
 
-  # Syncthing overrides
-  syncthing.enable      = true;
-  syncthing.user        = "withrin";
-  syncthing.dataDir     = "/home/withrin/.config/syncthing";
-  syncthing.guiUser     = "admin";
-  syncthing.guiPassword = "6beRmEkbhRDevQrFAmz*";
-  syncthing.guiAddress  = "127.0.0.1:8384";
+  services.syncthing = {
+    enable           = true;                      # ← start at boot
+    user             = "withrin";                 # run under THIS uid
+    dataDir          = "/home/withrin/Sync";      # where the synced files live
+    configDir        = "/home/withrin/.config/syncthing";
+    openDefaultPorts = true;                      # 22000/TCP+UDP, 21027/UDP
+  };
+
+
+  systemd.user.services.syncthingtray = {
+    description = "Syncthing tray indicator";
+
+    after      = [ "default.target" "syncthing.service" ];
+    wantedBy   = [ "default.target" ];      # auto-start in the session
+
+    serviceConfig = {
+       Type      = "simple";
+       ExecStart = "${pkgs.syncthingtray}/bin/syncthingtray --wait";
+       };
+    };
 
   # add laptop-only options (touchpad, battery, etc.) here
 }
