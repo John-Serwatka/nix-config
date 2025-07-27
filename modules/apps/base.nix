@@ -13,9 +13,7 @@
     neovim
     kdePackages.kate
     obsidian
-    _1password-gui
-    jetbrains.idea-ultimate
-    gnupg
+    jetbrains.idea-community-src
     pinentry
     kdePackages.plasma-browser-integration
     openjdk21
