@@ -13,7 +13,6 @@
     neovim
     kdePackages.kate
     obsidian
-    jetbrains.idea-community-src
     pinentry
     kdePackages.plasma-browser-integration
     openjdk21
