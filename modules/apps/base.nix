@@ -15,7 +15,7 @@
     obsidian
     pinentry
     kdePackages.plasma-browser-integration
-    openjdk21
+    #openjdk21
     firefox
     google-chrome
     kdePackages.kalarm
