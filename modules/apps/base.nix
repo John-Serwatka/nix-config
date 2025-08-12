@@ -35,5 +35,6 @@
     vlc
     syncthing
     syncthingtray
+    jetbrains.idea-ultimate
   ];
 }
