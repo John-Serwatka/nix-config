@@ -10,5 +10,6 @@
     wine
     winetricks
     vkd3d
+    heroic
   ];
 }

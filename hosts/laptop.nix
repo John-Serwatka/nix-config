@@ -20,6 +20,7 @@
 
         # Graphics
         ../modules/hardware/amdgpu.nix
+        ../modules/hardware/vulkan.nix
 
         # Input devices
         ../modules/hardware/network-adapter.nix
