@@ -13,8 +13,12 @@
     neovim
     kdePackages.kate
     obsidian
+    _1password-gui
+    jetbrains.idea-ultimate
+    gnupg
     pinentry
     kdePackages.plasma-browser-integration
+    openjdk21
     firefox
     google-chrome
     kdePackages.kalarm
@@ -35,6 +39,8 @@
     vlc
     syncthing
     syncthingtray
-    jetbrains.idea-ultimate
+    bluez
+    bluez-tools
+    bluez-experimental
   ];
 }
