@@ -1,10 +1,9 @@
-# modules/services/network-adapter.nix
-{ config, lib, pkgs, ... }:
+# modules/hardware/network.nix — NetworkManager and firewall port options
+{ config, lib, ... }:
 
 with lib;
 
 {
-  # Option Declarations
   options.networking.enableManager = mkOption {
     type        = types.bool;
     default     = false;
@@ -18,12 +17,13 @@ with lib;
     description = "A list of TCP ports to allow through the firewall.";
   };
 
-  # Module Config
-  config = mkIf config.networking.enableManager {
+  config = mkMerge [
+    (mkIf config.networking.enableManager {
       networking.networkmanager.enable = true;
-    }
-    // mkIf (config.networking.openTCPPorts != []) {
+    })
+    (mkIf (config.networking.openTCPPorts != []) {
       networking.firewall.enable          = true;
       networking.firewall.allowedTCPPorts = config.networking.openTCPPorts;
-    };
+    })
+  ];
 }

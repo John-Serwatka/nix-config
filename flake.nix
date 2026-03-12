@@ -2,37 +2,29 @@
   description = "Highly modular multi-host NixOS config with Home Manager";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nixpkgs.url      = "github:NixOS/nixpkgs/nixos-unstable";
     home-manager.url = "github:nix-community/home-manager";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs = { self, nixpkgs, home-manager, ... }:
   let
-    system = "x86_64-linux";
+    mkHost = import ./lib/mkHost.nix { inherit nixpkgs home-manager; };
   in {
     nixosConfigurations = {
 
-      desktop = nixpkgs.lib.nixosSystem {
-        inherit system;
-        modules = [
-          ./hosts/desktop.nix
-
-          { home-manager.users.withrin = import ./home-manager/withrin.nix; }
-
-          home-manager.nixosModules.home-manager
-        ];
+      desktop = mkHost {
+        hostname = "desktop";
+        users    = [ "withrin" ];
+        modules  = [ ./hosts/desktop/default.nix ];
       };
 
-      laptop = nixpkgs.lib.nixosSystem {
-        inherit system;
-        modules = [
-          ./hosts/laptop.nix
-          { home-manager.users.withrin = import ./home-manager/withrin.nix; }
-          home-manager.nixosModules.home-manager
-
-        ];
+      laptop = mkHost {
+        hostname = "laptop";
+        users    = [ "withrin" ];
+        modules  = [ ./hosts/laptop/default.nix ];
       };
+
     };
   };
 }
