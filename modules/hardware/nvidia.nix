@@ -11,7 +11,7 @@
     "nvidia-drm.fbdev=1"
   ];
 
-  hardware.opengl.enable = true;
+  hardware.graphics.enable = true;
 
   hardware.nvidia = {
     package                      = config.boot.kernelPackages.nvidiaPackages.stable;

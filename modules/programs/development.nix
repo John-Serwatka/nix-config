@@ -6,7 +6,7 @@
     neovim
     kdePackages.kate
     kdePackages.plasma-browser-integration
-    jetbrains.idea-ultimate
-    pinentry
+    jetbrains.idea
+    pinentry-gnome3
   ];
 }

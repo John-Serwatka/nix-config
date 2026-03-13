@@ -9,6 +9,6 @@
   services.desktopManager.plasma6.enable   = true;
 
   environment.systemPackages = with pkgs; [
-    kdeFrameworks.kscreen   # Display and Monitor KCM
+    kdePackages.kscreen   # Display and Monitor KCM
   ];
 }
