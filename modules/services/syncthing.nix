@@ -1,49 +1,33 @@
-# modules/services/syncthing.nix (deprecated wrapper)
-{ config
-, lib
-, syncthingUser ? "withrin"
-, syncthingDataDir ? "/home/withrin/.config/syncthing"
-, ...
-}:
+# modules/services/syncthing.nix — Syncthing file sync + system tray
+#
+# Set `myConfig.syncthingUser` in the host to configure which user runs Syncthing.
+# Example:  myConfig.syncthingUser = "withrin";
+{ config, lib, pkgs, ... }:
+
+with lib;
 
 {
-  ########################################
-  ##  Deprecation notice  ###############
-  ########################################
-
-  _module.deprecatedReason = ''
-    This custom Syncthing wrapper is obsolete.
-    Switch to the built-in `services.syncthing` options
-    (see <https://search.nixos.org/options?channel=unstable&show=services.syncthing>).
-  '';
-
-  ########################################
-  ##  Compatibility options (unchanged) ##
-  ########################################
-  options.syncthing = {
-    enable  = lib.mkEnableOption "DEPRECATED";
-    user    = lib.mkOption { type = lib.types.str; default = syncthingUser; };
-    dataDir = lib.mkOption { type = lib.types.str; default = syncthingDataDir; };
-    guiUser     = lib.mkOption { type = lib.types.str; default = "admin";     };
-    guiPassword = lib.mkOption { type = lib.types.str; default = "changeme";  };
-    guiAddress  = lib.mkOption { type = lib.types.str; default = "127.0.0.1:8384"; };
+  options.myConfig.syncthingUser = mkOption {
+    type        = types.str;
+    description = "Username to run Syncthing for (sets dataDir and configDir).";
   };
 
-  ########################################
-  ##  Forward settings + extra warning  ##
-  ########################################
-  config = lib.mkIf config.syncthing.enable {
-    warning = "⚠️  `syncthing.*` is deprecated; replace with `services.syncthing.*`";
-
+  config = {
     services.syncthing = {
       enable           = true;
-      user             = config.syncthing.user;
-      dataDir          = config.syncthing.dataDir;
+      user             = config.myConfig.syncthingUser;
+      dataDir          = "/home/${config.myConfig.syncthingUser}/Sync";
+      configDir        = "/home/${config.myConfig.syncthingUser}/.config/syncthing";
       openDefaultPorts = true;
-      settings.gui = {
-        user     = config.syncthing.guiUser;
-        password = config.syncthing.guiPassword;
-        address  = config.syncthing.guiAddress;
+    };
+
+    systemd.user.services.syncthingtray = {
+      description = "Syncthing tray indicator";
+      after       = [ "default.target" "syncthing.service" ];
+      wantedBy    = [ "default.target" ];
+      serviceConfig = {
+        Type      = "simple";
+        ExecStart = "${pkgs.syncthingtray}/bin/syncthingtray --wait";
       };
     };
   };

@@ -3,7 +3,7 @@
 {
   # install the input stack system-wide
   environment.systemPackages = with pkgs; [
-    ckb-next
+    #ckb-next
     piper
     libratbag
   ];
