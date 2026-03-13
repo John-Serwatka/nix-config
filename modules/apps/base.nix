@@ -14,9 +14,9 @@
     kdePackages.kate
     obsidian
     _1password-gui
-    jetbrains.idea-ultimate
+    jetbrains.idea
     gnupg
-    pinentry
+    pinentry-gnome3
     kdePackages.plasma-browser-integration
     openjdk21
     firefox
