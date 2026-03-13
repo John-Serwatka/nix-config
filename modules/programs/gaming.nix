@@ -8,6 +8,7 @@
     lutris          # Linux game manager
     heroic          # Epic/GOG launcher
     protonup-rs     # Proton-GE updater
+    steam
     wine
     winetricks
     vkd3d           # DirectX 12 over Vulkan
