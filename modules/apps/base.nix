@@ -13,6 +13,7 @@
     neovim
     kdePackages.kate
     obsidian
+    pinentry-curses
     _1password-gui
     jetbrains.idea
     gnupg
@@ -42,5 +43,6 @@
     bluez
     bluez-tools
     bluez-experimental
+    godot-mono
   ];
 }
