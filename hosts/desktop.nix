@@ -38,6 +38,7 @@
 
 networking.hostName = "desktop";
 
+hardware.xpadneo.enable = true;
 hardware.bluetooth.enable = true;
 services.blueman.enable  = true;
 
@@ -52,6 +53,10 @@ networking.openTCPPorts     = [ 25565 ];
   };
 
   system.stateVersion = "25.05";
+
+security.pki.certificates = [
+  (builtins.readFile ../certs/caddy-ca.crt)
+];
 
 
   services.syncthing = {
