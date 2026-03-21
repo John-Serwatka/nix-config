@@ -8,5 +8,7 @@
     kdePackages.plasma-browser-integration
     jetbrains.idea
     pinentry-gnome3
+    godot-mono
+    git
   ];
 }
