@@ -5,6 +5,9 @@
   environment.systemPackages = with pkgs; [
     obsidian
     gnome-pomodoro
+    aseprite
+    krita
+    inkscape
 
     # KDE PIM suite
     kdePackages.kalarm
