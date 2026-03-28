@@ -8,17 +8,24 @@
 
   programs.bash.enable = true;
 
-  programs.git = {
-    enable = true;
+ programs.git = {
+   enable = true;
 
-    settings = {
-        user = {
-            name  = "withriin";
-            email = "johnchrisserwatka@gmail.com";
-        };
-    };
-  };
+   userName = "John Serwatka";
+   userEmail = "johnchrisserwatka@gmail.com";
 
+   includes = [
+     {
+       condition = "gitdir:/home/withrin/code/**";
+       contents = {
+         user = {
+           name = "John Serwatka";
+           email = "jserwatka@pocketlorestudios.com";
+         };
+       };
+     }
+   ];
+ };
   home.packages = with pkgs; [
     bat
   ];

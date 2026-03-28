@@ -8,6 +8,7 @@
     git
     wget
     brave
+    chatgpt
     spotify
     discord
     neovim
