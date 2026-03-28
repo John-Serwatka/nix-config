@@ -8,6 +8,7 @@
     aseprite
     krita
     inkscape
+    #bitwarden-desktop
 
     # KDE PIM suite
     kdePackages.kalarm
