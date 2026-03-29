@@ -20,5 +20,7 @@
     kdePackages.kaccounts-providers
     kdePackages.akonadi
     kdePackages.akonadi-mime
+
+    rclone
   ];
 }
