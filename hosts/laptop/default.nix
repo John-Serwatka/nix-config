@@ -42,6 +42,12 @@
   networking.enableManager = true;
   networking.openTCPPorts  = [ 25565 ];
 
+    # Set video drivers
+  services.xserver.videoDrivers = [ "displaylink" "modesetting" ];
+
+  # Enable the DisplayLink Manager service
+  systemd.services.dlm.wantedBy = [ "multi-user.target" ];
+
   services.asusd.enable              = true;
   services.asusd.setPerformanceProfile = true;
 

@@ -5,5 +5,8 @@
   environment.systemPackages = with pkgs; [
     spotify
     vlc
+    kooha
+    obs-studio
+    ffmpeg
   ];
 }

@@ -21,14 +21,14 @@ with lib;
       openDefaultPorts = true;
     };
 
-    systemd.user.services.syncthingtray = {
-      description = "Syncthing tray indicator";
-      after       = [ "default.target" "syncthing.service" ];
-      wantedBy    = [ "default.target" ];
-      serviceConfig = {
-        Type      = "simple";
-        ExecStart = "${pkgs.syncthingtray}/bin/syncthingtray --wait";
-      };
-    };
+    #systemd.user.services.syncthingtray = {
+    #  description = "Syncthing tray indicator";
+    #  after       = [ "default.target" "syncthing.service" ];
+    #  wantedBy    = [ "default.target" ];
+    #  serviceConfig = {
+    #    Type      = "simple";
+    #    ExecStart = "${pkgs.syncthingtray}/bin/syncthingtray --wait";
+    #  };
+    #};
   };
 }

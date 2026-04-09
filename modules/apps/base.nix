@@ -45,5 +45,6 @@
     bluez-tools
     bluez-experimental
     godot-mono
+    displaylink
   ];
 }
