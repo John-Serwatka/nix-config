@@ -23,7 +23,11 @@ nixpkgs.lib.nixosSystem {
       home-manager.useGlobalPkgs   = true;
       home-manager.useUserPackages = true;
       home-manager.users = nixpkgs.lib.genAttrs users
-        (user: import ../users/${user}/home.nix);
+        ( user: { imports = [
+        ../users/${user}/home.nix
+        ../modules/services/rclone.nix
+        ];
+      });
     }
   ];
 }

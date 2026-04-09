@@ -7,5 +7,6 @@
     udiskie     # automount
     udisks      # disk management
     lm_sensors  # hardware temperature monitoring
+    rclone      # remote syncing
   ];
 }
