@@ -25,7 +25,7 @@ nixpkgs.lib.nixosSystem {
       home-manager.users = nixpkgs.lib.genAttrs users
         ( user: { imports = [
         ../users/${user}/home.nix
-        ..modules/services/rclone.nix
+        ../modules/services/rclone.nix
         ];
       });
     }
