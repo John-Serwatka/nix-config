@@ -8,6 +8,17 @@
 
   programs.bash.enable = true;
 
+    my.rclone = {
+        enable = true;
+
+        mounts = {
+          pocketlore = {
+            remote = "PocketLore_gdrive:";
+            mountPoint = "/home/withrin/cloud/pocketlore";
+          };
+        };
+      };
+
  programs.git = {
    enable = true;
 
