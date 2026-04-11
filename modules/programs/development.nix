@@ -7,6 +7,9 @@
     kdePackages.kate
     kdePackages.plasma-browser-integration
     jetbrains.idea
+    jetbrains.rider
+    dotnet-sdk_8
+    mono
     pinentry-gnome3
     godot-mono
     git
