@@ -21,9 +21,12 @@
 
  programs.git = {
    enable = true;
-
-   userName = "John Serwatka";
-   userEmail = "johnchrisserwatka@gmail.com";
+   settings = {
+    user.name = "John Serwatka";
+    user.email = "johnchrisserwatka@gmail.com";
+   };
+#   userName = "John Serwatka";
+#   userEmail = "johnchrisserwatka@gmail.com";
 
    includes = [
      {
