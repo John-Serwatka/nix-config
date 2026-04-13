@@ -5,6 +5,6 @@
 {
   users.users.withrin = {
     isNormalUser = true;
-    extraGroups  = [ "wheel" "networkmanager" "input" ];
+    extraGroups  = [ "wheel" "networkmanager" "input" "docker" ];
   };
 }

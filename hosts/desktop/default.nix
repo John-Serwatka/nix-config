@@ -37,6 +37,17 @@
     ../../modules/hardware/bluetooth.nix
     ../../modules/hardware/network.nix
   ];
+    services.ollama = {
+      enable = true;
+      package = pkgs.ollama-cuda;
+      loadModels = [
+        "qwen2.5-coder:7b"
+        "qwen2.5-coder:1.5b"
+        ];
+    };
+
+  virtualisation.docker.enable = true;
+  users.users.withrin.extraGroups = [ "docker" ];
 
   networking.hostName       = "desktop";
   networking.enableManager  = true;
