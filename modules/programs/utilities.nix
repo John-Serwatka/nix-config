@@ -8,5 +8,6 @@
     udisks      # disk management
     lm_sensors  # hardware temperature monitoring
     rclone      # remote syncing
+    flameshot   # screenshot to clipboard
   ];
 }
