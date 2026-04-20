@@ -23,22 +23,8 @@
    enable = true;
    settings = {
     user.name = "John Serwatka";
-    user.email = "johnchrisserwatka@gmail.com";
+    user.email = "jserwatka@pocketlorestudios.com";
    };
-#   userName = "John Serwatka";
-#   userEmail = "johnchrisserwatka@gmail.com";
-
-   includes = [
-     {
-       condition = "gitdir:/home/withrin/code/**";
-       contents = {
-         user = {
-           name = "John Serwatka";
-           email = "jserwatka@pocketlorestudios.com";
-         };
-       };
-     }
-   ];
  };
 
    home.sessionVariables = {
