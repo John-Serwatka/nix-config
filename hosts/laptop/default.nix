@@ -41,6 +41,7 @@
   networking.hostName      = "laptop";
   networking.enableManager = true;
   networking.openTCPPorts  = [ 25565 ];
+  services.tailscale.enable = true;
 
     # Set video drivers
   services.xserver.videoDrivers = [ "displaylink" "modesetting" ];
