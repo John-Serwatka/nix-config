@@ -46,6 +46,12 @@
         ];
     };
 
+  fileSystems."/mnt/storage" = {
+    device = "/dev/disk/by-uuid/b9d2c837-c3ab-4297-9b12-30e3c0279519";
+    fsType = "ext4";
+    options = [ "defaults" "nofail" ];
+  };
+
   virtualisation.docker.enable = true;
   users.users.withrin.extraGroups = [ "docker" ];
 
