@@ -2,6 +2,9 @@
 { pkgs, ... }:
 
 {
+  imports = [
+    ./desktop-shortcuts.nix
+  ];
   home.username      = "withrin";
   home.homeDirectory = "/home/withrin";
   home.stateVersion  = "25.05";
