@@ -13,5 +13,7 @@
     pinentry-gnome3
     godot-mono
     git
+    reaper
+    surge-xt
   ];
 }
