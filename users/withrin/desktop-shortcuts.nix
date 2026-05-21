@@ -109,7 +109,7 @@
 
   xdg.desktopEntries.idea = {
     name = "IntelliJ IDEA";
-    exec = "idea-ultimate";
+    exec = "idea";
     icon = "intellijidea";
     terminal = false;
     type = "Application";
