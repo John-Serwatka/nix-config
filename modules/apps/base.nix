@@ -10,7 +10,6 @@
     brave
     chatgpt
     spotify
-    discord
     neovim
     kdePackages.kate
     obsidian
