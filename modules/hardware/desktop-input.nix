@@ -1,6 +1,8 @@
-{ config, pkgs, ... }:
-
 {
+  config,
+  pkgs,
+  ...
+}: {
   # install the input stack system-wide
   environment.systemPackages = with pkgs; [
     #ckb-next

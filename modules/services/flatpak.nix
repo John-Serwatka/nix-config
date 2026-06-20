@@ -1,7 +1,9 @@
 # modules/services/flatpak.nix
-{ config, pkgs, ... }:
-
 {
+  config,
+  pkgs,
+  ...
+}: {
   services.flatpak.enable = true;
 
   # enable XDG desktop portals…

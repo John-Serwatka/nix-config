@@ -1,14 +1,16 @@
-{ config, lib, pkgs, ... }:
-
-let
-  cfg = config.my.rclone;
-in
 {
+  config,
+  lib,
+  pkgs,
+  ...
+}: let
+  cfg = config.my.rclone;
+in {
   options.my.rclone = {
     enable = lib.mkEnableOption "rclone mounts";
 
     mounts = lib.mkOption {
-      type = lib.types.attrsOf (lib.types.submodule ({ name, ... }: {
+      type = lib.types.attrsOf (lib.types.submodule ({name, ...}: {
         options = {
           remote = lib.mkOption {
             type = lib.types.str;
@@ -41,34 +43,37 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    home.packages = [ pkgs.rclone ];
+    home.packages = [pkgs.rclone];
 
-    systemd.user.services = lib.mapAttrs'
-      (name: mountCfg:
-        lib.nameValuePair "rclone-mount-${name}" {
-          Unit = {
-            Description = "rclone mount: ${name}";
-            After = [ "network-online.target" ];
-            Wants = [ "network-online.target" ];
-          };
+    systemd.user.services =
+      lib.mapAttrs'
+      (
+        name: mountCfg:
+          lib.nameValuePair "rclone-mount-${name}" {
+            Unit = {
+              Description = "rclone mount: ${name}";
+              After = ["network-online.target"];
+              Wants = ["network-online.target"];
+            };
 
-          Service = {
-            Type = "simple";
-            ExecStartPre = "${pkgs.coreutils}/bin/mkdir -p ${mountCfg.mountPoint}";
-            ExecStart = lib.concatStringsSep " " ([
-              "${pkgs.rclone}/bin/rclone"
-              "mount"
-              mountCfg.remote
-              mountCfg.mountPoint
-              "--daemon-timeout=30s"
-            ] ++ mountCfg.extraArgs);
-            ExecStop = "${pkgs.fuse3}/bin/fusermount3 -u ${mountCfg.mountPoint}";
-            Restart = "on-failure";
-            RestartSec = "10";
-          };
+            Service = {
+              Type = "simple";
+              ExecStartPre = "${pkgs.coreutils}/bin/mkdir -p ${mountCfg.mountPoint}";
+              ExecStart = lib.concatStringsSep " " ([
+                  "${pkgs.rclone}/bin/rclone"
+                  "mount"
+                  mountCfg.remote
+                  mountCfg.mountPoint
+                  "--daemon-timeout=30s"
+                ]
+                ++ mountCfg.extraArgs);
+              ExecStop = "${pkgs.fuse3}/bin/fusermount3 -u ${mountCfg.mountPoint}";
+              Restart = "on-failure";
+              RestartSec = "10";
+            };
 
-          Install.WantedBy = [ "default.target" ];
-        }
+            Install.WantedBy = ["default.target"];
+          }
       )
       cfg.mounts;
   };

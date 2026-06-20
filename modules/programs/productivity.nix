@@ -1,7 +1,5 @@
 # modules/programs/productivity.nix — notes, calendar, PIM, and focus tools
-{ pkgs, ... }:
-
-{
+{pkgs, ...}: {
   environment.systemPackages = with pkgs; [
     obsidian
     gnome-pomodoro
@@ -10,6 +8,7 @@
     inkscape
     libreoffice-qt-fresh
     # bitwarden-desktop
+    claude-code
 
     # KDE PIM suite
     kdePackages.kalarm
@@ -21,7 +20,5 @@
     kdePackages.kaccounts-providers
     kdePackages.akonadi
     kdePackages.akonadi-mime
-
-    rclone
   ];
 }

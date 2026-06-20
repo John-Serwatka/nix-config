@@ -1,8 +1,10 @@
-{ config, pkgs, ... }:
-
 {
-  hardware.graphics.enable       = true;
+  config,
+  pkgs,
+  ...
+}: {
+  hardware.graphics.enable = true;
   hardware.graphics.enable32Bit = true;
 
-  services.xserver.videoDrivers = [ "amdgpu" ];
+  services.xserver.videoDrivers = ["amdgpu"];
 }

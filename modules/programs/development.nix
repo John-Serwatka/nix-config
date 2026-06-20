@@ -1,7 +1,5 @@
 # modules/programs/development.nix — editors, IDEs, and developer tooling
-{ pkgs, ... }:
-
-{
+{pkgs, ...}: {
   environment.systemPackages = with pkgs; [
     neovim
     kdePackages.kate
@@ -12,7 +10,6 @@
     mono
     pinentry-gnome3
     godot-mono
-    git
     reaper
     surge-xt
   ];

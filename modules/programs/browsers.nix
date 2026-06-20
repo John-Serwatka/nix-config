@@ -1,7 +1,5 @@
 # modules/programs/browsers.nix — web browsers
-{ pkgs, ... }:
-
-{
+{pkgs, ...}: {
   environment.systemPackages = with pkgs; [
     brave
     firefox

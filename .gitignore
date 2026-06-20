@@ -1,0 +1,21 @@
+# Nix build outputs
+result
+result-*
+
+# direnv
+.direnv/
+
+# JetBrains IDE state
+.idea/
+
+# Editor/OS noise
+*.swp
+*~
+.DS_Store
+
+# Never commit private key material or decrypted secrets.
+# (sops-encrypted files under secrets/ ARE safe to commit.)
+*.age
+keys.txt
+*.dec
+
