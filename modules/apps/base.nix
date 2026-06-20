@@ -7,8 +7,7 @@
     nano
     git
     wget
-    brave
-    chatgpt
+    bravess
     spotify
     neovim
     kdePackages.kate
