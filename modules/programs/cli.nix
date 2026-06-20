@@ -1,7 +1,5 @@
 # modules/programs/cli.nix — core command-line tools available on all hosts
-{ pkgs, ... }:
-
-{
+{pkgs, ...}: {
   environment.systemPackages = with pkgs; [
     vim
     nano

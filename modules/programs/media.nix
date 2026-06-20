@@ -1,7 +1,5 @@
 # modules/programs/media.nix — audio and video players
-{ pkgs, ... }:
-
-{
+{pkgs, ...}: {
   environment.systemPackages = with pkgs; [
     spotify
     vlc

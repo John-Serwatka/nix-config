@@ -1,9 +1,7 @@
 # modules/programs/communication.nix — chat and messaging apps
-{ pkgs, ... }:
-
-{
+{pkgs, ...}: {
   environment.systemPackages = with pkgs; [
-   # discord
+    # discord
     vesktop
   ];
 }
