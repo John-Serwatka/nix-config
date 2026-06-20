@@ -1,7 +1,5 @@
 # users/withrin/desktop-shortcuts.nix
-{ pkgs, ... }:
-
-{
+{pkgs, ...}: {
   #
   # Install icons
   #
@@ -25,7 +23,6 @@
   home.file.".local/share/icons/hicolor/scalable/apps/rider.svg".source =
     ../../assets/icons/rider.svg;
 
-
   # PNG icons
   home.file.".local/share/icons/hicolor/256x256/apps/brave.png".source =
     ../../assets/icons/brave.png;
@@ -39,7 +36,6 @@
   home.file.".local/share/icons/hicolor/256x256/apps/steam.png".source =
     ../../assets/icons/steam.png;
 
-
   #
   # Desktop entries
   #
@@ -50,7 +46,7 @@
     icon = "chatgpt";
     terminal = false;
     type = "Application";
-    categories = [ "Network" "Utility" ];
+    categories = ["Network" "Utility"];
   };
 
   xdg.desktopEntries.claude = {
@@ -59,16 +55,16 @@
     icon = "claude";
     terminal = false;
     type = "Application";
-    categories = [ "Network" "Utility" ];
+    categories = ["Network" "Utility"];
   };
 
   xdg.desktopEntries.discord = {
     name = "Discord";
-    exec = "discord";
+    exec = "vesktop";
     icon = "discord";
     terminal = false;
     type = "Application";
-    categories = [ "Network" "InstantMessaging" ];
+    categories = ["Network" "InstantMessaging"];
   };
 
   xdg.desktopEntries.spotify = {
@@ -77,7 +73,7 @@
     icon = "spotify";
     terminal = false;
     type = "Application";
-    categories = [ "Audio" "Music" ];
+    categories = ["Audio" "Music"];
   };
 
   xdg.desktopEntries.steam = {
@@ -86,7 +82,7 @@
     icon = "steam";
     terminal = false;
     type = "Application";
-    categories = [ "Game" ];
+    categories = ["Game"];
   };
 
   xdg.desktopEntries.godot = {
@@ -95,7 +91,7 @@
     icon = "godot";
     terminal = false;
     type = "Application";
-    categories = [ "Development" ];
+    categories = ["Development"];
   };
 
   xdg.desktopEntries.rider = {
@@ -104,7 +100,7 @@
     icon = "rider";
     terminal = false;
     type = "Application";
-    categories = [ "Development" ];
+    categories = ["Development"];
   };
 
   xdg.desktopEntries.idea = {
@@ -113,7 +109,7 @@
     icon = "intellijidea";
     terminal = false;
     type = "Application";
-    categories = [ "Development" ];
+    categories = ["Development"];
   };
 
   xdg.desktopEntries.aseprite = {
@@ -122,6 +118,6 @@
     icon = "aseprite";
     terminal = false;
     type = "Application";
-    categories = [ "Graphics" ];
+    categories = ["Graphics"];
   };
 }

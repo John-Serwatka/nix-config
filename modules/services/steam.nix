@@ -1,15 +1,11 @@
 # modules/services/steam.nix
-{ config, lib, pkgs, ... }:
-{
+# Note: unfree is allowed globally in modules/core/nix.nix (allowUnfree = true),
+# which already covers steam/steam-run, so no per-package predicate is needed here.
+{...}: {
   programs.steam = {
-    enable                 = true;
-    remotePlay.openFirewall      = true;  # if you use Steam Remote Play
+    enable = true;
+    remotePlay.openFirewall = true; # if you use Steam Remote Play
     localNetworkGameTransfers.openFirewall = true;
     # dedicatedServer.openFirewall = true;  # if you run source servers
   };
-
-  # And make sure unfree is allowed for steam & steam-run:
-  nixpkgs.config.allowUnfreePredicate = pkg: lib.elem (lib.getName pkg) [
-    "steam" "steam-unwrapped" "steam-run"
-  ];
 }

@@ -1,7 +1,5 @@
 # hosts/desktop/default.nix — desktop machine configuration
-{ pkgs, ... }:
-
-{
+{pkgs, ...}: {
   imports = [
     ./hardware.nix
     ../../users/withrin/default.nix
@@ -10,6 +8,7 @@
     ../../modules/core/nix.nix
     ../../modules/core/locale.nix
     ../../modules/core/bootloader.nix
+    ../../modules/core/sops.nix
 
     # Programs
     ../../modules/programs/cli.nix
@@ -37,27 +36,32 @@
     ../../modules/hardware/bluetooth.nix
     ../../modules/hardware/network.nix
   ];
-    services.ollama = {
-      enable = true;
-      package = pkgs.ollama-cuda;
-      loadModels = [
-        "qwen2.5-coder:7b"
-        "qwen2.5-coder:1.5b"
-        ];
-    };
+  services.ollama = {
+    enable = true;
+    package = pkgs.ollama-cuda;
+    loadModels = [
+      "qwen2.5-coder:7b"
+      "qwen2.5-coder:1.5b"
+    ];
+  };
 
   fileSystems."/mnt/storage" = {
     device = "/dev/disk/by-uuid/b9d2c837-c3ab-4297-9b12-30e3c0279519";
     fsType = "ext4";
-    options = [ "defaults" "nofail" ];
+    options = ["defaults" "nofail"];
   };
 
   virtualisation.docker.enable = true;
-  users.users.withrin.extraGroups = [ "docker" ];
+  users.users.withrin.extraGroups = ["docker"];
 
-  networking.hostName       = "desktop";
-  networking.enableManager  = true;
-  networking.openTCPPorts   = [ 25565 ];
+  # Trust the self-hosted Caddy private CA (cert lives in ../../certs).
+  security.pki.certificates = [
+    (builtins.readFile ../../certs/caddy-ca.crt)
+  ];
+
+  networking.hostName = "desktop";
+  networking.enableManager = true;
+  networking.openTCPPorts = [25565];
 
   myConfig.syncthingUser = "withrin";
 

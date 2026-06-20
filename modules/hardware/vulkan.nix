@@ -1,26 +1,16 @@
-{ config, pkgs, ... }:
+# modules/hardware/vulkan.nix — Vulkan/OpenGL loaders and tooling
+{pkgs, ...}: {
+  hardware.graphics.enable = true;
+  hardware.graphics.enable32Bit = true;
 
-{
-#  hardware.opengl = {
-    # enable the generic OpenGL/Vulkan support
-#    enable       = true;
-#    driSupport   = true;
-#    driSupport32Bit = true;
+  # Runtime loaders for the graphics stack.
+  hardware.graphics.extraPackages = with pkgs; [
+    vulkan-loader
+    # vulkan-validation-layers   # uncomment for Vulkan debugging
+  ];
 
-
-    hardware.graphics.enable = true;
-    hardware.graphics.enable32Bit = true;
-
-    # extra packages for Vulkan tooling and loaders
-    hardware.graphics.extraPackages = with pkgs; [
-      vulkan-loader
-      vulkan-tools        # includes vulkaninfo, etc.
-      vulkan-headers
-      # if you want validation layers:
-      # vulkan-validate-layers
-    ];
-    environment.systemPackages = with pkgs; [
-      vulkan-tools
+  # CLI tooling (vulkaninfo, vkcube, …).
+  environment.systemPackages = with pkgs; [
+    vulkan-tools
   ];
 }
-

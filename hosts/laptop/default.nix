@@ -1,7 +1,5 @@
 # hosts/laptop/default.nix — laptop machine configuration
-{ pkgs, ... }:
-
-{
+{pkgs, ...}: {
   imports = [
     ./hardware.nix
     ../../users/withrin/default.nix
@@ -10,6 +8,7 @@
     ../../modules/core/nix.nix
     ../../modules/core/locale.nix
     ../../modules/core/bootloader.nix
+    ../../modules/core/sops.nix
 
     # Programs
     ../../modules/programs/cli.nix
@@ -38,18 +37,18 @@
     ../../modules/hardware/network.nix
   ];
 
-  networking.hostName      = "laptop";
+  networking.hostName = "laptop";
   networking.enableManager = true;
-  networking.openTCPPorts  = [ 25565 ];
+  networking.openTCPPorts = [25565];
   services.tailscale.enable = true;
 
-    # Set video drivers
-  services.xserver.videoDrivers = [ "displaylink" "modesetting" ];
+  # Set video drivers
+  services.xserver.videoDrivers = ["displaylink" "modesetting"];
 
   # Enable the DisplayLink Manager service
-  systemd.services.dlm.wantedBy = [ "multi-user.target" ];
+  systemd.services.dlm.wantedBy = ["multi-user.target"];
 
-  services.asusd.enable              = true;
+  services.asusd.enable = true;
   services.asusd.setPerformanceProfile = true;
 
   myConfig.syncthingUser = "withrin";
