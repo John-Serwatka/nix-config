@@ -34,5 +34,6 @@
 
   home.packages = with pkgs; [
     bat
+    syncthingtray # provides the KDE Plasma Syncthing plasmoid (panel widget)
   ];
 }
