@@ -6,6 +6,7 @@
     kdePackages.plasma-browser-integration
     jetbrains.idea
     jetbrains.rider
+    jetbrains.webstorm
     dotnet-sdk_8
     mono
     pinentry-gnome3
