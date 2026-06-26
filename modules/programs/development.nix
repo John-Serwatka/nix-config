@@ -13,5 +13,6 @@
     godot-mono
     reaper
     surge-xt
+    butler
   ];
 }
