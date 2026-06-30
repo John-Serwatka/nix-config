@@ -2,7 +2,6 @@
 {pkgs, ...}: {
   imports = [
     ./hardware.nix
-    ../../users/withrin/default.nix
 
     # Core
     ../../modules/core/nix.nix
@@ -50,8 +49,6 @@
 
   services.asusd.enable = true;
   services.asusd.setPerformanceProfile = true;
-
-  myConfig.syncthingUser = "withrin";
 
   system.stateVersion = "25.05";
 }

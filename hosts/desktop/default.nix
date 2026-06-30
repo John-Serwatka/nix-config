@@ -2,7 +2,6 @@
 {pkgs, ...}: {
   imports = [
     ./hardware.nix
-    ../../users/withrin/default.nix
 
     # Core
     ../../modules/core/nix.nix
@@ -51,8 +50,8 @@
     options = ["defaults" "nofail"];
   };
 
+  # Configured users are added to the docker group automatically (modules/core/users.nix).
   virtualisation.docker.enable = true;
-  users.users.withrin.extraGroups = ["docker"];
 
   # Trust the self-hosted Caddy private CA (cert lives in ../../certs).
   security.pki.certificates = [
@@ -62,8 +61,6 @@
   networking.hostName = "desktop";
   networking.enableManager = true;
   networking.openTCPPorts = [25565];
-
-  myConfig.syncthingUser = "withrin";
 
   system.stateVersion = "25.05";
 }

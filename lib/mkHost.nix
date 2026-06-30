@@ -20,10 +20,16 @@ nixpkgs.lib.nixosSystem {
   inherit system;
   modules =
     modules
+    # System-level account for each user (users/<name>/default.nix).
+    ++ map (user: ../users/${user}/default.nix) users
     ++ [
+      ../modules/core/users.nix
       home-manager.nixosModules.home-manager
       sops-nix.nixosModules.sops
       {
+        # Single source of truth for the host's users (see modules/core/users.nix).
+        myConfig.users = users;
+
         home-manager.useGlobalPkgs = true;
         home-manager.useUserPackages = true;
         # Back up clobbered dotfiles instead of failing activation on them.
@@ -35,6 +41,8 @@ nixpkgs.lib.nixosSystem {
               ../users/${user}/home.nix
               ../modules/services/rclone.nix
             ];
+            home.username = user;
+            home.homeDirectory = "/home/${user}";
           });
       }
     ];
