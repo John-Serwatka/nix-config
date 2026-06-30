@@ -13,7 +13,6 @@
     ../../modules/programs/cli.nix
     ../../modules/programs/browsers.nix
     ../../modules/programs/communication.nix
-    ../../modules/programs/media.nix
     ../../modules/programs/productivity.nix
     ../../modules/programs/utilities.nix
 
