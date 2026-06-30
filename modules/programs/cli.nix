@@ -5,5 +5,6 @@
     nano
     git
     wget
+    pinentry-gnome3 # GPG passphrase entry (used by gpg-agent)
   ];
 }

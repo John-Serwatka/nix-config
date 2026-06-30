@@ -5,5 +5,6 @@
     firefox
     chromium
     google-chrome
+    kdePackages.plasma-browser-integration # KDE <-> browser integration host
   ];
 }
