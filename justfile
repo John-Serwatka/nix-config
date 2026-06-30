@@ -51,6 +51,17 @@ rebuild:
 test:
     sudo nixos-rebuild test --flake .#{{ hostname }}
 
+# Roll back to the previous generation and activate it.
+[group('system')]
+rollback:
+    sudo nixos-rebuild switch --rollback
+
+# Activate a specific past generation by number (see `just generations`).
+[group('system')]
+rollback-to gen:
+    sudo nix-env -p /nix/var/nix/profiles/system --switch-generation {{ gen }} && \
+        sudo /nix/var/nix/profiles/system/bin/switch-to-configuration switch
+
 # ─── Maintenance ──────────────────────────────────────────────────────────────
 
 # Update all flake inputs (nixpkgs, home-manager, sops-nix, ...).
