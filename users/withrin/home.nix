@@ -5,6 +5,7 @@
 {pkgs, ...}: {
   imports = [
     ./desktop-shortcuts.nix
+    ../../profiles/home/dev.nix
   ];
   home.stateVersion = "25.05";
 
@@ -27,10 +28,6 @@
       user.name = "John Serwatka";
       user.email = "jserwatka@pocketlorestudios.com";
     };
-  };
-
-  home.sessionVariables = {
-    DOTNET_ROOT = "${pkgs.dotnet-sdk_8}/share/dotnet";
   };
 
   # Native installs (e.g. Claude Code) drop binaries here; put it on PATH.
