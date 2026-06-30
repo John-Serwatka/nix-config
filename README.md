@@ -2,6 +2,37 @@
 
 This flake contains a multi-host NixOS configuration with Home Manager.
 
+## Users
+
+Each host declares its users once, in `flake.nix`:
+
+```nix
+desktop = mkHost {
+  hostname = "desktop";
+  users = ["withrin"]; # source of truth for this host
+  modules = [./hosts/desktop/default.nix];
+};
+```
+
+That single list (`lib/mkHost.nix`) drives both the system account
+(`users/<name>/default.nix`) and the Home Manager profile (`users/<name>/home.nix`).
+`home.username` / `home.homeDirectory` are set from it automatically, and
+`modules/core/users.nix` exposes `myConfig.users` / `myConfig.primaryUser` so
+single-instance services (e.g. Syncthing) and Docker group membership follow the
+list instead of a hardcoded name.
+
+To add a user:
+
+1. Create `users/<name>/` with `default.nix` (system account) and `home.nix`
+   (Home Manager) — copy `users/withrin/` as a starting point.
+2. Add `<name>` to the host's `users = [ ... ]` in `flake.nix`.
+3. Rebuild.
+
+Package ownership is currently shared at the system level. The intended next step
+is a hybrid model: keep host-level needs (drivers, services, desktop basics) as
+system packages, and move user-owned tools (dev/gaming/creative apps) into
+per-user Home Manager profiles imported from each user's `home.nix`.
+
 ## Formatting
 
 Run `nix fmt` to format all Nix files in the repository using the Alejandra

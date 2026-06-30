@@ -15,7 +15,8 @@
 with lib; {
   options.myConfig.syncthingUser = mkOption {
     type = types.str;
-    description = "Username to run Syncthing for (sets dataDir and configDir).";
+    default = config.myConfig.primaryUser;
+    description = "Username to run Syncthing for (sets dataDir and configDir). Defaults to the host's primary user.";
   };
 
   config = {

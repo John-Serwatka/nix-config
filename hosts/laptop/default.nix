@@ -2,7 +2,6 @@
 {pkgs, ...}: {
   imports = [
     ./hardware.nix
-    ../../users/withrin/default.nix
 
     # Core
     ../../modules/core/nix.nix
@@ -13,11 +12,6 @@
     # Programs
     ../../modules/programs/cli.nix
     ../../modules/programs/browsers.nix
-    ../../modules/programs/communication.nix
-    ../../modules/programs/media.nix
-    ../../modules/programs/productivity.nix
-    ../../modules/programs/development.nix
-    ../../modules/programs/gaming.nix
     ../../modules/programs/utilities.nix
 
     # Services
@@ -50,8 +44,6 @@
 
   services.asusd.enable = true;
   services.asusd.setPerformanceProfile = true;
-
-  myConfig.syncthingUser = "withrin";
 
   system.stateVersion = "25.05";
 }
