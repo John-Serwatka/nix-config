@@ -11,7 +11,7 @@
 #   * grow it under the section banners below (SOPS, Home Manager, VM, deploy)
 
 # Target host for nixos-rebuild, detected automatically so the same recipe
-# works on desktop, laptop, etc. without editing the command.
+# works on any host defined in this flake, without editing the command.
 hostname := `hostname`
 
 # Show all available recipes (runs when `just` is called with no arguments).
@@ -30,9 +30,21 @@ fmt:
 check:
     nix flake check
 
-# Format, then check — run before committing.
+# Format + check — the gate that should pass before committing.
 [group('core')]
-verify: fmt check
+ci: fmt check
+
+# Alias for `ci` — reads nicely for local pre-commit use.
+[group('core')]
+verify: ci
+
+# Quick repo/system sanity check (host, branch, status, flake metadata).
+[group('core')]
+doctor:
+    @echo "Hostname: {{ hostname }}"
+    @git branch --show-current
+    @git status --short
+    @nix flake metadata --no-write-lock-file
 
 # ─── System ───────────────────────────────────────────────────────────────────
 
@@ -41,10 +53,20 @@ verify: fmt check
 build:
     sudo nixos-rebuild build --flake .#{{ hostname }}
 
+# Preview what `rebuild` would change, without activating — a safe step between build and rebuild.
+[group('system')]
+diff:
+    sudo nixos-rebuild dry-activate --flake .#{{ hostname }}
+
 # Build, activate, and set as the boot default for this host.
 [group('system')]
 rebuild:
     sudo nixos-rebuild switch --flake .#{{ hostname }}
+
+# Build and set for next boot without activating now (good for riskier changes).
+[group('system')]
+boot:
+    sudo nixos-rebuild boot --flake .#{{ hostname }}
 
 # Build and activate for this boot only (not made the boot default).
 [group('system')]
@@ -90,6 +112,11 @@ gc age="14d":
 [group('maintenance')]
 generations:
     nixos-rebuild list-generations
+
+# Remove leftover build symlinks (result, result-*) from local experiments.
+[group('maintenance')]
+clean:
+    rm -f result result-*
 
 # ─── Secrets (SOPS) ───────────────────────────────────────────────────────────
 # TODO: edit (sops secrets/secrets.yaml), rekey (sops updatekeys),
