@@ -23,6 +23,16 @@
 #
 # Note: the Syncthing module has no file-based GUI-password option, so keep that
 # password out of the repo and set it in the Syncthing web UI.
+#
+# ── Deliberately NOT managed here (yet) — TODO: circle back ────────────────────
+# rclone.conf: the gdrive remote uses an OAuth token that rclone rewrites when it
+# refreshes, so a read-only sops secret would break token rotation. Left imperative
+# for now (~/.config/rclone/rclone.conf, see modules/services/rclone.nix). Revisit
+# deliberately as one of:
+#   * a service account (static creds) if it fits the Drive use case, or
+#   * a writable runtime config generated from an encrypted seed, or
+#   * a manual per-machine rclone config kept outside the repo.
+# Until then, keep sops focused on stable secrets (password hashes, API tokens, …).
 {config, ...}: {
   sops = {
     defaultSopsFile = ../../secrets/secrets.yaml;
