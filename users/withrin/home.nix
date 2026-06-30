@@ -11,6 +11,7 @@
     ../../profiles/home/media.nix
     ../../profiles/home/communication.nix
     ../../profiles/home/productivity.nix
+    ../../profiles/home/utilities.nix
   ];
   home.stateVersion = "25.05";
 
