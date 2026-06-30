@@ -12,10 +12,10 @@
     ../../profiles/home/communication.nix
     ../../profiles/home/productivity.nix
     ../../profiles/home/utilities.nix
+    ../../profiles/home/shell.nix
+    ../../profiles/home/git.nix
   ];
   home.stateVersion = "25.05";
-
-  programs.bash.enable = true;
 
   my.rclone = {
     enable = true;
@@ -28,12 +28,11 @@
     };
   };
 
-  programs.git = {
-    enable = true;
-    settings = {
-      user.name = "John Serwatka";
-      user.email = "jserwatka@pocketlorestudios.com";
-    };
+  # Personal git identity; shared git config (aliases, delta, defaults) is in
+  # profiles/home/git.nix.
+  programs.git.settings = {
+    user.name = "John Serwatka";
+    user.email = "jserwatka@pocketlorestudios.com";
   };
 
   # Native installs (e.g. Claude Code) drop binaries here; put it on PATH.
