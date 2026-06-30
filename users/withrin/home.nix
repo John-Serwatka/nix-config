@@ -9,6 +9,7 @@
     ../../profiles/home/creative.nix
     ../../profiles/home/gaming.nix
     ../../profiles/home/media.nix
+    ../../profiles/home/communication.nix
   ];
   home.stateVersion = "25.05";
 
