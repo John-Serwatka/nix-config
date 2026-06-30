@@ -7,5 +7,10 @@
     # Audio production
     reaper
     surge-xt
+
+    # Visual art
+    aseprite
+    krita
+    inkscape
   ];
 }

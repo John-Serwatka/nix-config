@@ -10,6 +10,7 @@
     ../../profiles/home/gaming.nix
     ../../profiles/home/media.nix
     ../../profiles/home/communication.nix
+    ../../profiles/home/productivity.nix
   ];
   home.stateVersion = "25.05";
 

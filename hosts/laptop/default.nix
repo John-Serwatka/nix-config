@@ -12,7 +12,6 @@
     # Programs
     ../../modules/programs/cli.nix
     ../../modules/programs/browsers.nix
-    ../../modules/programs/productivity.nix
     ../../modules/programs/utilities.nix
 
     # Services

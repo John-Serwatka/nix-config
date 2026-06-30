@@ -1,14 +1,13 @@
-# modules/programs/productivity.nix — notes, calendar, PIM, and focus tools
+# profiles/home/productivity.nix — notes, office, calendar, PIM, and focus tools (user-owned, opt-in)
+#
+# Import from a user's home.nix:
+#   imports = [ ../../profiles/home/productivity.nix ];
 {pkgs, ...}: {
-  environment.systemPackages = with pkgs; [
+  home.packages = with pkgs; [
     obsidian
     gnome-pomodoro
-    aseprite
-    krita
-    inkscape
     libreoffice-qt-fresh
     # bitwarden-desktop
-    claude-code
 
     # KDE PIM suite
     kdePackages.kalarm

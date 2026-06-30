@@ -30,6 +30,7 @@
     ripgrep
     fd
     tree
+    claude-code
   ];
 
   home.sessionVariables = {
