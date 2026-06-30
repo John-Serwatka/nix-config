@@ -6,6 +6,7 @@
   imports = [
     ./desktop-shortcuts.nix
     ../../profiles/home/dev.nix
+    ../../profiles/home/creative.nix
   ];
   home.stateVersion = "25.05";
 
