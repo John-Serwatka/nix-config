@@ -69,6 +69,18 @@ rollback-to gen:
 update:
     nix flake update
 
+# Update a single flake input (e.g. `just update-input nixpkgs`).
+[group('maintenance')]
+update-input input:
+    nix flake update {{ input }}
+
+# Note: reverts the lockfile only (pair with `just rollback` for the running
+# system); if the update was already committed, use `git revert` instead.
+# Undo an *uncommitted* flake update — restore flake.lock from git.
+[group('maintenance')]
+update-revert:
+    git restore --staged --worktree --source=HEAD flake.lock
+
 # Collect garbage: remove generations older than `age` (default 14d).
 [group('maintenance')]
 gc age="14d":
