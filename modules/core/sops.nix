@@ -1,48 +1,39 @@
 # modules/core/sops.nix — encrypted secrets via sops-nix
 #
-# The sops-nix NixOS module is wired in globally by lib/mkHost.nix, so secrets
-# are available on every host. This file is where you turn it on and declare
-# what to decrypt. It is intentionally INERT until you do the one-time setup
-# below — with no `sops.secrets` defined, nothing is read and the build stays
-# green even before any key or secrets file exists.
+# The sops-nix NixOS module is wired in globally by lib/mkHost.nix. Recipients
+# live in ./.sops.yaml; encrypted material lives under ./secrets (safe to commit).
 #
-# ── One-time setup ────────────────────────────────────────────────────────────
-# 1. Generate an age key for this machine (kept OUTSIDE the repo):
-#       mkdir -p ~/.config/sops/age
-#       nix run nixpkgs#age -- -keygen -o ~/.config/sops/age/keys.txt
-#    Copy the printed public key (age1...) into ./.sops.yaml.
+# ── Decryption key ────────────────────────────────────────────────────────────
+# Each machine holds a private age key OUTSIDE the repo at
+#   /home/<primaryUser>/.config/sops/age/keys.txt   (mode 600)
+# generated once with `age-keygen`. Its PUBLIC key is a recipient in .sops.yaml.
+# Back this file up — losing it means the secrets can't be decrypted. On a fresh
+# install, place the key file before the first switch (the user password is
+# decrypted from it during account creation).
 #
-#    (Alternatively, derive an age key from the host's SSH key so you don't have
-#    to distribute a separate file — see the sops-nix README.)
-#
-# 2. Create and edit the encrypted secrets file:
+# ── Adding a secret ───────────────────────────────────────────────────────────
+# 1. Edit the encrypted store:  SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt \
 #       nix run nixpkgs#sops -- secrets/secrets.yaml
-#    Add entries such as:
-#       syncthing_gui_password: "rotate-me-to-a-fresh-value"
-#       wifi_home_psk:          "..."
+# 2. Declare it in `sops.secrets` below.
+# 3. Consume it via the *file-based* option of whatever you configure, using
+#    `config.sops.secrets.<name>.path` — never interpolate a secret's value into
+#    a Nix string (that would land world-readable in the Nix store). E.g.
+#       users.users.<u>.hashedPasswordFile = config.sops.secrets.<u>_password.path;
+#       networking.wireless.secretsFile     = config.sops.secrets.wifi.path;
 #
-# 3. Uncomment the `sops` block below and declare each secret you want decrypted,
-#    then `nixos-rebuild switch`.
-#
-# ── How to consume a secret ───────────────────────────────────────────────────
-# A declared secret is decrypted to a file at /run/secrets/<name>; reference it
-# with `config.sops.secrets.<name>.path`. Use the *file-based* option of whatever
-# you're configuring — never interpolate the secret's value into a Nix string,
-# or it would land world-readable in the Nix store. Examples:
-#       users.users.withrin.hashedPasswordFile = config.sops.secrets.user_pw.path;
-#       networking.wireless.secretsFile         = config.sops.secrets.wifi.path;
-#
-# Note on Syncthing: the NixOS Syncthing module has no file-based GUI-password
-# option, so it can't pull the password from sops cleanly. Keep the Syncthing
-# GUI password OUT of this repo entirely and set it in the Syncthing web UI
-# instead (which is the current arrangement).
-{...}: {
-  # sops = {
-  #   defaultSopsFile = ../../secrets/secrets.yaml;
-  #   age.keyFile     = "/home/withrin/.config/sops/age/keys.txt";
-  #
-  #   secrets = {
-  #     # wifi_home_psk = { };
-  #   };
-  # };
+# Note: the Syncthing module has no file-based GUI-password option, so keep that
+# password out of the repo and set it in the Syncthing web UI.
+{config, ...}: {
+  sops = {
+    defaultSopsFile = ../../secrets/secrets.yaml;
+    age.keyFile = "/home/${config.myConfig.primaryUser}/.config/sops/age/keys.txt";
+
+    secrets = {
+      # User login password hash. neededForUsers makes it available early enough
+      # for account creation (decrypted to /run/secrets-for-users/<name>).
+      withrin_password = {
+        neededForUsers = true;
+      };
+    };
+  };
 }
