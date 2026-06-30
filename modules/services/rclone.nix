@@ -1,3 +1,8 @@
+#
+# NOTE: rclone.conf (~/.config/rclone/rclone.conf) is intentionally NOT
+# sops-managed yet — the gdrive OAuth token is rewritten on refresh and needs a
+# writable file. It stays imperative for now; see the "circle back" note in
+# modules/core/sops.nix.
 {
   config,
   lib,
