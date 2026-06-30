@@ -15,7 +15,6 @@
     ../../modules/programs/communication.nix
     ../../modules/programs/media.nix
     ../../modules/programs/productivity.nix
-    ../../modules/programs/gaming.nix
     ../../modules/programs/utilities.nix
 
     # Services

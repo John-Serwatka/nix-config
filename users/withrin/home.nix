@@ -7,6 +7,7 @@
     ./desktop-shortcuts.nix
     ../../profiles/home/dev.nix
     ../../profiles/home/creative.nix
+    ../../profiles/home/gaming.nix
   ];
   home.stateVersion = "25.05";
 
