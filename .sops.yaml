@@ -4,9 +4,9 @@
 # replacing the placeholder. Then `sops secrets/secrets.yaml` will encrypt to it.
 # Add one key per machine/user that should be able to decrypt.
 keys:
-  - &withrin age1REPLACE_WITH_YOUR_PUBLIC_AGE_KEY
+  - &desktop age14cda7x4t7fd92f3j4hvw3p2lrfe68zw4fgr8petjlzrr0m2ze4pq60gqky
 creation_rules:
   - path_regex: secrets/[^/]+\.(yaml|json|env|ini)$
     key_groups:
       - age:
-          - *withrin
+          - *desktop
