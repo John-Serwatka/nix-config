@@ -5,8 +5,10 @@
 # Add one key per machine/user that should be able to decrypt.
 keys:
   - &desktop age14cda7x4t7fd92f3j4hvw3p2lrfe68zw4fgr8petjlzrr0m2ze4pq60gqky
+  - &laptop age1janda6uj5zfggma8en4mjlq7ymg44wyrjjvf9feydcj3au9z2c7qkr7nwt
 creation_rules:
   - path_regex: secrets/[^/]+\.(yaml|json|env|ini)$
     key_groups:
       - age:
           - *desktop
+          - *laptop
