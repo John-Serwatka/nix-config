@@ -36,14 +36,18 @@
   networking.openTCPPorts = [25565];
   services.tailscale.enable = true;
 
-  # Set video drivers
-  services.xserver.videoDrivers = ["displaylink" "modesetting"];
+  # Set video drivers (amdgpu for the iGPU/dGPU, displaylink for USB docks).
+  services.xserver.videoDrivers = ["amdgpu" "displaylink" "modesetting"];
 
   # Enable the DisplayLink Manager service
   systemd.services.dlm.wantedBy = ["multi-user.target"];
 
   services.asusd.enable = true;
   services.asusd.setPerformanceProfile = true;
+
+  # Compressed RAM swap — no on-disk swap partition exists, so this provides
+  # OOM headroom for heavy builds without touching the SSD.
+  zramSwap.enable = true;
 
   system.stateVersion = "25.05";
 }
