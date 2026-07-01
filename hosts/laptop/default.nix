@@ -22,10 +22,10 @@
     ../../modules/services/syncthing.nix
     ../../modules/services/printing.nix
     ../../modules/services/asusd.nix
-    ../../modules/services/thermald.nix
 
     # Hardware
     ../../modules/hardware/amdgpu.nix
+    ../../modules/hardware/amd-pstate.nix
     ../../modules/hardware/vulkan.nix
     ../../modules/hardware/bluetooth.nix
     ../../modules/hardware/network.nix
@@ -43,7 +43,7 @@
   systemd.services.dlm.wantedBy = ["multi-user.target"];
 
   services.asusd.enable = true;
-  services.asusd.setPerformanceProfile = true;
+  services.asusd.defaultProfile = "balanced";
 
   # Compressed RAM swap — no on-disk swap partition exists, so this provides
   # OOM headroom for heavy builds without touching the SSD.
