@@ -1,5 +1,5 @@
 # hosts/laptop/default.nix — laptop machine configuration
-{pkgs, ...}: {
+{...}: {
   imports = [
     ./hardware.nix
 

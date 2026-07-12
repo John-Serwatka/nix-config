@@ -13,9 +13,6 @@
     };
   };
 
-  # disable blueman for now
-  services.blueman.enable = false;
-
   services.udev.extraRules = ''
     ACTION=="add", SUBSYSTEM=="bluetooth", KERNEL=="hci0", ATTR{power/control}="on"
   '';
