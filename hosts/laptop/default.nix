@@ -43,7 +43,7 @@
   systemd.services.dlm.wantedBy = ["multi-user.target"];
 
   services.asusd.enable = true;
-  services.asusd.defaultProfile = "balanced";
+  myConfig.asusd.defaultProfile = "balanced";
 
   # Compressed RAM swap — no on-disk swap partition exists, so this provides
   # OOM headroom for heavy builds without touching the SSD.
