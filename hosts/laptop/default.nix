@@ -22,13 +22,13 @@
     ../../modules/services/syncthing.nix
     ../../modules/services/printing.nix
     ../../modules/services/asusd.nix
+    ../../modules/services/networking.nix
 
     # Hardware
     ../../modules/hardware/amdgpu.nix
     ../../modules/hardware/amd-pstate.nix
     ../../modules/hardware/vulkan.nix
     ../../modules/hardware/bluetooth.nix
-    ../../modules/hardware/network.nix
   ];
 
   networking.hostName = "laptop";

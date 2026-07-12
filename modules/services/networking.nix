@@ -1,4 +1,4 @@
-# modules/hardware/network.nix — NetworkManager and firewall port options
+# modules/services/networking.nix — NetworkManager and firewall port options
 #
 # Options live under myConfig.* (not networking.*) so they can never collide
 # with a future upstream option of the same name.

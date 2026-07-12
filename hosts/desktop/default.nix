@@ -21,6 +21,7 @@
     ../../modules/services/flatpak.nix
     ../../modules/services/ollama.nix
     ../../modules/services/syncthing.nix
+    ../../modules/services/networking.nix
 
     # Hardware
     ../../modules/hardware/nvidia.nix
@@ -29,7 +30,6 @@
     ../../modules/hardware/openrgb.nix
     ../../modules/hardware/desktop-input.nix
     ../../modules/hardware/bluetooth.nix
-    ../../modules/hardware/network.nix
   ];
 
   fileSystems."/mnt/storage" = {

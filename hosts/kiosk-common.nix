@@ -18,9 +18,7 @@
     # Services
     ../modules/services/audio.nix
     ../modules/services/kiosk.nix
-
-    # Hardware
-    ../modules/hardware/network.nix
+    ../modules/services/networking.nix
   ];
 
   myConfig.kiosk.enable = true;
