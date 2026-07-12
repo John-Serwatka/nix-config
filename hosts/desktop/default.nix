@@ -24,8 +24,7 @@
     ../../modules/services/networking.nix
 
     # Hardware
-    ../../modules/hardware/nvidia.nix
-    ../../modules/hardware/vulkan.nix
+    ../../modules/hardware/graphics.nix
     ../../modules/hardware/amd-pstate.nix
     ../../modules/hardware/openrgb.nix
     ../../modules/hardware/desktop-input.nix
@@ -45,6 +44,8 @@
   security.pki.certificates = [
     (builtins.readFile ../../certs/caddy-ca.crt)
   ];
+
+  myConfig.graphics.vendor = "nvidia";
 
   networking.hostName = "desktop";
   myConfig.networking.enableManager = true;
