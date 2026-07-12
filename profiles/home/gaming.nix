@@ -3,7 +3,7 @@
 # Import from a user's home.nix:
 #   imports = [ ../../profiles/home/gaming.nix ];
 #
-# Note: Steam itself is enabled host-side via modules/services/steam.nix
+# Note: Steam itself is enabled host-side via modules/programs/steam.nix
 # (programs.steam.enable), since it needs system-level integration.
 {pkgs, ...}: {
   home.packages = with pkgs; [

@@ -1,4 +1,4 @@
-# modules/services/steam.nix
+# modules/programs/steam.nix
 # Note: unfree is allowed globally in modules/core/nix.nix (allowUnfree = true),
 # which already covers steam/steam-run, so no per-package predicate is needed here.
 {...}: {

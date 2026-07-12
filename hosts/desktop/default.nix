@@ -13,13 +13,13 @@
     ../../modules/programs/cli.nix
     ../../modules/programs/browsers.nix
     ../../modules/programs/utilities.nix
+    ../../modules/programs/steam.nix
 
     # Services
     ../../modules/services/audio.nix
     ../../modules/services/desktop.nix
     ../../modules/services/flatpak.nix
     ../../modules/services/ollama.nix
-    ../../modules/services/steam.nix
     ../../modules/services/syncthing.nix
 
     # Hardware
