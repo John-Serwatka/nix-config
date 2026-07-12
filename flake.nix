@@ -39,16 +39,19 @@
 
       # Game kiosks (see hosts/kiosk-common.nix). The kiosk session user is
       # created by modules/services/kiosk.nix, not listed here — `users` only
-      # holds accounts that get a Home Manager profile.
+      # holds accounts that get a Home Manager profile. withrin gets the slim
+      # deploy/debug profile (users/withrin/home-kiosk.nix), not the desktop one.
       optiplex = mkHost {
         hostname = "optiplex";
         users = ["withrin"];
+        homeProfile = "home-kiosk";
         modules = [./hosts/optiplex/default.nix];
       };
 
       beelink = mkHost {
         hostname = "beelink";
         users = ["withrin"];
+        homeProfile = "home-kiosk";
         modules = [./hosts/beelink/default.nix];
       };
     };
