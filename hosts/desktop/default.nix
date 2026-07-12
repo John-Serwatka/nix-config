@@ -31,11 +31,19 @@
     ../../modules/hardware/bluetooth.nix
   ];
 
+  # Skip access-time metadata writes on the SSDs (merges into the mount
+  # options from hardware.nix).
+  fileSystems."/".options = ["noatime"];
+
   fileSystems."/mnt/storage" = {
     device = "/dev/disk/by-uuid/b9d2c837-c3ab-4297-9b12-30e3c0279519";
     fsType = "ext4";
-    options = ["defaults" "nofail"];
+    options = ["defaults" "nofail" "noatime"];
   };
+
+  # Compressed RAM swap, tried before the 8G swapfile (higher priority) —
+  # OOM headroom for heavy builds without hitting the SSD.
+  zramSwap.enable = true;
 
   # Configured users are added to the docker group automatically (modules/core/users.nix).
   virtualisation.docker.enable = true;
