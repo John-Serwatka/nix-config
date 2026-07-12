@@ -6,9 +6,17 @@
 keys:
   - &desktop age14cda7x4t7fd92f3j4hvw3p2lrfe68zw4fgr8petjlzrr0m2ze4pq60gqky
   - &laptop age1janda6uj5zfggma8en4mjlq7ymg44wyrjjvf9feydcj3au9z2c7qkr7nwt
+  # TODO(kiosks): run `age-keygen` on each box, paste the PUBLIC keys here,
+  # uncomment these anchors (and their entries in creation_rules), then run
+  # `sops updatekeys secrets/secrets.yaml`. Do this BEFORE the first switch —
+  # withrin_password is neededForUsers, so the box must be able to decrypt.
+  # - &optiplex age1REPLACE_ME
+  # - &beelink age1REPLACE_ME
 creation_rules:
   - path_regex: secrets/[^/]+\.(yaml|json|env|ini)$
     key_groups:
       - age:
           - *desktop
           - *laptop
+          # - *optiplex
+          # - *beelink
