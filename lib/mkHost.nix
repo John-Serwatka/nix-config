@@ -6,6 +6,10 @@
 #
 # To add a new machine: call mkHost with a new hostname + module list.
 # To add a new user:    create users/<name>/home.nix, then add the name to `users`.
+#
+# `homeProfile` selects which users/<name>/<homeProfile>.nix each user gets —
+# e.g. the kiosks pass "home-kiosk" for a slim profile instead of the full
+# desktop one.
 {
   nixpkgs,
   home-manager,
@@ -15,6 +19,7 @@
   system ? "x86_64-linux",
   users ? [],
   modules ? [],
+  homeProfile ? "home",
 }:
 nixpkgs.lib.nixosSystem {
   # Platform is declared via nixpkgs.hostPlatform below (upstream's preferred
@@ -43,7 +48,7 @@ nixpkgs.lib.nixosSystem {
           nixpkgs.lib.genAttrs users
           (user: {
             imports = [
-              ../users/${user}/home.nix
+              ../users/${user}/${homeProfile}.nix
               ../modules/home/rclone.nix
             ];
             home.username = user;
