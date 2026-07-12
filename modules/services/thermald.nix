@@ -1,8 +1,4 @@
-# modules/services/thermald.nix
-{
-  config,
-  pkgs,
-  ...
-}: {
+# modules/services/thermald.nix — Intel thermal daemon (Intel CPUs only)
+{...}: {
   services.thermald.enable = true;
 }
