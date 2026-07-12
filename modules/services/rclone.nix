@@ -63,16 +63,18 @@ in {
 
             Service = {
               Type = "simple";
-              ExecStartPre = "${pkgs.coreutils}/bin/mkdir -p ${mountCfg.mountPoint}";
+              # Paths are shell-quoted so mount points with spaces survive
+              # systemd's ExecStart word splitting.
+              ExecStartPre = "${pkgs.coreutils}/bin/mkdir -p ${lib.escapeShellArg mountCfg.mountPoint}";
               ExecStart = lib.concatStringsSep " " ([
                   "${pkgs.rclone}/bin/rclone"
                   "mount"
-                  mountCfg.remote
-                  mountCfg.mountPoint
+                  (lib.escapeShellArg mountCfg.remote)
+                  (lib.escapeShellArg mountCfg.mountPoint)
                   "--daemon-timeout=30s"
                 ]
                 ++ mountCfg.extraArgs);
-              ExecStop = "${pkgs.fuse3}/bin/fusermount3 -u ${mountCfg.mountPoint}";
+              ExecStop = "${pkgs.fuse3}/bin/fusermount3 -u ${lib.escapeShellArg mountCfg.mountPoint}";
               Restart = "on-failure";
               RestartSec = "10";
             };

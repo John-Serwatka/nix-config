@@ -17,7 +17,8 @@
   modules ? [],
 }:
 nixpkgs.lib.nixosSystem {
-  inherit system;
+  # Platform is declared via nixpkgs.hostPlatform below (upstream's preferred
+  # mechanism) rather than nixosSystem's legacy `system` argument.
   modules =
     modules
     # System-level account for each user (users/<name>/default.nix).
@@ -27,6 +28,10 @@ nixpkgs.lib.nixosSystem {
       home-manager.nixosModules.home-manager
       sops-nix.nixosModules.sops
       {
+        # Overrides the mkDefault in each host's generated hardware.nix
+        # (same value today; mkHost stays the single source of truth).
+        nixpkgs.hostPlatform = system;
+
         # Single source of truth for the host's users (see modules/core/users.nix).
         myConfig.users = users;
 

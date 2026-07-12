@@ -32,8 +32,8 @@
   ];
 
   networking.hostName = "laptop";
-  networking.enableManager = true;
-  networking.openTCPPorts = [25565];
+  myConfig.networking.enableManager = true;
+  myConfig.networking.openTCPPorts = [25565];
   services.tailscale.enable = true;
 
   # Set video drivers (amdgpu for the iGPU/dGPU, displaylink for USB docks).

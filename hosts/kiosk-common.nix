@@ -25,7 +25,21 @@
 
   myConfig.kiosk.enable = true;
 
-  networking.enableManager = true;
+  myConfig.networking.enableManager = true;
+
+  # Remote game deploys: rsync-over-ssh into /opt/kiosk (see
+  # modules/services/kiosk.nix). Key-only auth; the kiosk user itself has no
+  # password and no authorized keys, so only withrin can get in.
+  services.openssh = {
+    enable = true;
+    settings = {
+      PasswordAuthentication = false;
+      KbdInteractiveAuthentication = false;
+    };
+  };
+  users.users.withrin.openssh.authorizedKeys.keys = [
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINx1ujbVZk2s/RRjVfqLOyNS4HfV1vTNLLivpFIqP0YI withrin@desktop"
+  ];
 
   # WiFi/GPU firmware blobs (the Beelink has wireless; harmless on the OptiPlex).
   hardware.enableRedistributableFirmware = true;

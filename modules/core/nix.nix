@@ -2,8 +2,10 @@
 {...}: {
   nix.settings.experimental-features = ["nix-command" "flakes"];
 
-  # Deduplicate identical files in the store to save disk.
-  nix.settings.auto-optimise-store = true;
+  # Deduplicate identical files in the store to save disk. Runs on a schedule
+  # instead of during every build (auto-optimise-store slows builds and has a
+  # history of store-lock issues).
+  nix.optimise.automatic = true;
 
   # Garbage-collect old generations weekly.
   nix.gc = {
@@ -13,4 +15,5 @@
   };
 
   nixpkgs.config.allowUnfree = true;
+  programs.nix-ld.enable = true;
 }
