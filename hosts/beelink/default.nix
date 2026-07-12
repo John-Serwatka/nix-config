@@ -3,14 +3,13 @@
   imports = [
     ./hardware.nix
     ../kiosk-common.nix
-    ../../modules/hardware/amdgpu.nix
+    ../../modules/hardware/graphics.nix
     ../../modules/hardware/amd-pstate.nix
-    ../../modules/hardware/vulkan.nix
   ];
 
   myConfig.kiosk.gameName = "Horde of Viscount";
 
-  services.xserver.videoDrivers = ["amdgpu"];
+  myConfig.graphics.vendor = "amd";
 
   networking.hostName = "beelink";
 

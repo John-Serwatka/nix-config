@@ -25,18 +25,20 @@
     ../../modules/services/networking.nix
 
     # Hardware
-    ../../modules/hardware/amdgpu.nix
+    ../../modules/hardware/graphics.nix
     ../../modules/hardware/amd-pstate.nix
-    ../../modules/hardware/vulkan.nix
     ../../modules/hardware/bluetooth.nix
   ];
+
+  myConfig.graphics.vendor = "amd";
 
   networking.hostName = "laptop";
   myConfig.networking.enableManager = true;
   myConfig.networking.openTCPPorts = [25565];
   services.tailscale.enable = true;
 
-  # Set video drivers (amdgpu for the iGPU/dGPU, displaylink for USB docks).
+  # Custom driver list (overrides the graphics.nix default): displaylink for
+  # USB docks on top of amdgpu.
   services.xserver.videoDrivers = ["amdgpu" "displaylink" "modesetting"];
 
   # Enable the DisplayLink Manager service
