@@ -44,7 +44,7 @@ nixpkgs.lib.nixosSystem {
           (user: {
             imports = [
               ../users/${user}/home.nix
-              ../modules/services/rclone.nix
+              ../modules/home/rclone.nix
             ];
             home.username = user;
             home.homeDirectory = "/home/${user}";

@@ -27,7 +27,7 @@
 # ── Deliberately NOT managed here (yet) — TODO: circle back ────────────────────
 # rclone.conf: the gdrive remote uses an OAuth token that rclone rewrites when it
 # refreshes, so a read-only sops secret would break token rotation. Left imperative
-# for now (~/.config/rclone/rclone.conf, see modules/services/rclone.nix). Revisit
+# for now (~/.config/rclone/rclone.conf, see modules/home/rclone.nix). Revisit
 # deliberately as one of:
 #   * a service account (static creds) if it fits the Drive use case, or
 #   * a writable runtime config generated from an encrypted seed, or
