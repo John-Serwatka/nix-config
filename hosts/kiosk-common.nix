@@ -48,7 +48,7 @@
     imports = [
       ../modules/services/desktop.nix # Plasma 6 + SDDM
       ../modules/programs/browsers.nix
-      ../modules/programs/utilities.nix
+      ../modules/programs/hardware-tools.nix
     ];
     # Drop the greetd/kiosk session so SDDM is the display manager here.
     myConfig.kiosk.enable = lib.mkForce false;

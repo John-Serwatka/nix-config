@@ -4,7 +4,7 @@
 #   imports = [ ../../profiles/home/utilities.nix ];
 #
 # System/hardware admin tools (usbutils, udisks, lm_sensors) stay host-side in
-# modules/programs/utilities.nix.
+# modules/programs/hardware-tools.nix.
 {pkgs, ...}: {
   home.packages = with pkgs; [
     udiskie # automount tray daemon

@@ -12,7 +12,7 @@
     # Programs
     ../../modules/programs/cli.nix
     ../../modules/programs/browsers.nix
-    ../../modules/programs/utilities.nix
+    ../../modules/programs/hardware-tools.nix
     ../../modules/programs/steam.nix
 
     # Services
