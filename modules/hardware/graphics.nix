@@ -64,11 +64,13 @@ in {
 
       hardware.nvidia = {
         package = config.boot.kernelPackages.nvidiaPackages.stable;
-        open = false;
-        powerManagement.enable = false;
+        # Open kernel module — NVIDIA's recommended default for Turing+.
+        open = true;
+        # Preserve VRAM across suspend/resume (nvidia-suspend/-resume units);
+        # without this, Wayland sessions often break on wake.
+        powerManagement.enable = true;
         modesetting.enable = true;
         nvidiaSettings = true;
-        forceFullCompositionPipeline = true;
       };
 
       # Ensure /dev/nvidia* nodes are world-readable for GPU compute.
