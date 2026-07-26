@@ -116,5 +116,48 @@ in {
 
     # Controller udev rules (uaccess) without installing Steam.
     hardware.steam-hardware.enable = true;
+
+    # Game builds are foreign binaries, not Nix packages. Godot exports dlopen
+    # their display/audio stack at runtime instead of linking it, so it never
+    # appears in DT_NEEDED (`ldd` on the export shows only glibc) and there is
+    # nothing for autoPatchelf to rewrite. nix-ld — enabled globally in
+    # modules/core/nix.nix — is what resolves those dlopens, but its default
+    # library set is glibc-ish only, so the game fails every display driver in
+    # turn and exits immediately:
+    #
+    #   ERROR: Can't load Xlib dynamically.
+    #   WARNING: Can't load the Wayland client library.
+    #   ERROR: Unable to create DisplayServer, all display drivers failed.
+    #
+    # gamescope runs Xwayland, so X11 is the path Godot actually takes here;
+    # the Wayland libs are listed so its fallback works too.
+    programs.nix-ld.libraries = with pkgs; [
+      # X11 (via gamescope's Xwayland)
+      xorg.libX11
+      xorg.libXcursor
+      xorg.libXext
+      xorg.libXfixes
+      xorg.libXi
+      xorg.libXinerama
+      xorg.libXrandr
+      xorg.libXrender
+      xorg.libxcb
+      # Wayland fallback
+      libdecor
+      libxkbcommon
+      wayland
+      # Rendering
+      libglvnd
+      vulkan-loader
+      # Audio — PipeWire provides the PulseAudio interface (services/audio.nix)
+      alsa-lib
+      libpulseaudio
+      # Input hotplug + desktop portals the engine probes on startup
+      dbus
+      systemd
+      # Font rasterisation for anything not using a bundled font
+      fontconfig
+      freetype
+    ];
   };
 }
