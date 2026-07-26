@@ -132,16 +132,17 @@ in {
     # gamescope runs Xwayland, so X11 is the path Godot actually takes here;
     # the Wayland libs are listed so its fallback works too.
     programs.nix-ld.libraries = with pkgs; [
-      # X11 (via gamescope's Xwayland)
-      xorg.libX11
-      xorg.libXcursor
-      xorg.libXext
-      xorg.libXfixes
-      xorg.libXi
-      xorg.libXinerama
-      xorg.libXrandr
-      xorg.libXrender
-      xorg.libxcb
+      # X11 (via gamescope's Xwayland). Top-level names — the `xorg.*` set is
+      # deprecated in this nixpkgs and warns on eval.
+      libx11
+      libxcursor
+      libxext
+      libxfixes
+      libxi
+      libxinerama
+      libxrandr
+      libxrender
+      libxcb
       # Wayland fallback
       libdecor
       libxkbcommon
