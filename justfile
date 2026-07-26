@@ -14,6 +14,11 @@
 # works on any host defined in this flake, without editing the command.
 hostname := `hostname`
 
+# Local export directory for Horde of Viscount, used by `kiosk-deploy-hov`.
+# Sean ships a zip (misleadingly named .appimage); `build/` is the unpacked
+# tree plus the run.sh the kiosk launcher expects.
+hov_dir := "/home/withrin/PocketLoreStudios/Swiggins/HoV/Kiosk/build"
+
 # Show all available recipes (runs when `just` is called with no arguments).
 default:
     @just --list
@@ -180,10 +185,27 @@ deploy-build host:
 # Sync an exported build to <host>:/opt/kiosk/<game>/ and flip `current` at it.
 [group('kiosk')]
 kiosk-deploy dir game host:
-    chmod +x {{ dir }}/run.sh {{ dir }}/*.x86_64
+    #!/usr/bin/env bash
+    set -euo pipefail
+    chmod +x "{{ dir }}/run.sh"
+    # Engine entrypoints are named differently per engine (Godot ships
+    # <Name>.x86_64, GameMaker ships `tester`), so mark every top-level ELF
+    # executable by magic bytes rather than matching a filename glob — the
+    # old `*.x86_64` glob hard-failed on builds that had no such file.
+    for f in "{{ dir }}"/*; do
+      [ -f "$f" ] || continue
+      if head -c4 "$f" | od -An -tx1 | tr -d ' \n' | grep -q '^7f454c46'; then
+        chmod +x "$f"
+      fi
+    done
     ssh withrin@{{ host }} 'mkdir -p /opt/kiosk/{{ game }}'
-    rsync -av --delete {{ dir }}/ withrin@{{ host }}:/opt/kiosk/{{ game }}/
+    rsync -av --delete "{{ dir }}/" withrin@{{ host }}:/opt/kiosk/{{ game }}/
     ssh withrin@{{ host }} 'ln -sfn {{ game }} /opt/kiosk/current'
+
+# Deploy Horde of Viscount from its export directory (see hov_dir at the top).
+[group('kiosk')]
+kiosk-deploy-hov host:
+    just kiosk-deploy {{ hov_dir }} HordeOfViscount {{ host }}
 
 # Reboot a kiosk host to pick up a freshly deployed build.
 [group('kiosk')]
