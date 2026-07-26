@@ -1,4 +1,4 @@
-# hosts/beelink/default.nix — Beelink SER game kiosk (Horde of Viscount)
+# hosts/beelink/default.nix — Beelink SER game kiosk
 {...}: {
   imports = [
     ./hardware.nix
@@ -7,7 +7,9 @@
     ../../modules/hardware/amd-pstate.nix
   ];
 
-  myConfig.kiosk.gameName = "Horde of Viscount";
+  # Which game runs here is a deploy-time decision (see modules/services/kiosk.nix);
+  # gameName is just the log label — keep it in sync with whatever's deployed.
+  myConfig.kiosk.gameName = "Veilkeeper";
 
   myConfig.graphics.vendor = "amd";
 

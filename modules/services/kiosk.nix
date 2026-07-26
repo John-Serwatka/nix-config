@@ -12,9 +12,11 @@
 # backstop if the launcher ever dies; the launcher's own loop is the primary
 # supervisor.
 #
-# Game builds are deployed out-of-band: copy them under /opt/kiosk (owned by
-# myConfig.primaryUser, so rsync needs no sudo) with an executable entrypoint
-# at `command`. Launcher logs: `journalctl -t kiosk`.
+# Game builds are deployed out-of-band: rsync a build into its own directory
+# under /opt/kiosk (owned by myConfig.primaryUser, so rsync needs no sudo),
+# then point the /opt/kiosk/current symlink at it. `command` always resolves
+# through that symlink, so which game a host runs is a deploy-time decision,
+# not a host config decision. Launcher logs: `journalctl -t kiosk`.
 {
   config,
   lib,
@@ -61,8 +63,13 @@ in {
 
     command = mkOption {
       type = types.str;
-      default = "/opt/kiosk/game/run.sh";
-      description = "Executable entrypoint of the game build (native Linux).";
+      default = "/opt/kiosk/current/run.sh";
+      description = ''
+        Executable entrypoint of the game build (native Linux). Defaults to
+        the game-agnostic /opt/kiosk/current/run.sh — deploy a build to its
+        own directory under /opt/kiosk and symlink `current` at it, and this
+        default needs no per-host override.
+      '';
     };
 
     gamescopeArgs = mkOption {
