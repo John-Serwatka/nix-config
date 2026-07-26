@@ -1,16 +1,26 @@
-# hosts/installer/default.nix — bootable USB installer with this flake baked in
+# hosts/installer/default.nix — self-contained bootable USB installer
 #
 # Build:  nix build .#installer          (or `just iso`)
 # Write:  sudo dd if=result/iso/*.iso of=/dev/sdX bs=4M status=progress conv=fsync
 #
-# The point of a custom image is that the flake is already on it: no clone, no
-# network, no credentials needed on a machine that has never been set up. It
-# lands at /etc/nix-config, so installing a host is:
+# Boot it on the target and run one command:
 #
-#   nixos-install --flake /etc/nix-config#optiplex
+#   install-kiosk
 #
-# See the README for the full sequence (partitioning still happens by hand —
-# see the disko note there).
+# The image carries the Beelink's *prebuilt* system closure and its *prebuilt*
+# disko partitioning script, so installing needs no network and — critically —
+# no Nix evaluation on the target. Both of those matter:
+#
+#   * No network: a venue's wifi is not a dependency.
+#   * No evaluation: evaluating the flake needs the nixpkgs/home-manager/
+#     sops-nix sources, which are NOT on the image (only flake.nix and
+#     flake.lock are). `nixos-install --flake` would try to fetch them.
+#   * No RAM blowup: the live installer's /nix/store is a tmpfs overlay, so
+#     substituting the 13.5 GiB closure into it OOM-kills the machine. Reading
+#     it from the ISO squashfs and streaming to the target disk does not.
+#
+# The flake source is still mounted at /etc/nix-config for reference and for
+# post-install work, but the install path deliberately does not evaluate it.
 {
   disko,
   lib,
@@ -18,10 +28,53 @@
   pkgs,
   self,
   ...
-}: {
+}: let
+  # Prebuilt artifacts baked into the image (see isoImage.storeContents below).
+  beelinkSystem = self.nixosConfigurations.beelink.config.system.build.toplevel;
+  beelinkDisko = self.nixosConfigurations.beelink.config.system.build.diskoScript;
+
+  installKiosk = pkgs.writeShellApplication {
+    name = "install-kiosk";
+    runtimeInputs = [pkgs.util-linux];
+    text = ''
+      echo "Installs the Beelink kiosk onto the disk declared in its config"
+      echo "(myConfig.diskDevice). EVERYTHING ON THAT DISK WILL BE ERASED."
+      echo
+      lsblk -o NAME,SIZE,TYPE,TRAN,MODEL
+      echo
+      read -r -p 'Type ERASE to continue: ' reply
+      if [ "''${reply}" != "ERASE" ]; then
+        echo "Aborted — nothing was changed."
+        exit 1
+      fi
+
+      echo "==> partitioning, formatting and mounting"
+      ${beelinkDisko}
+
+      echo "==> installing from the USB (no network, no evaluation)"
+      nixos-install --root /mnt --system ${beelinkSystem} --no-root-password
+
+      echo
+      echo "Done. Reboot and remove the USB stick."
+    '';
+  };
+in {
   imports = [
     (modulesPath + "/installer/cd-dvd/installation-cd-minimal.nix")
   ];
+
+  # Everything the offline install needs, embedded in the ISO's squashfs.
+  # storeContents is a list option, so this appends to the installer's own
+  # entry rather than replacing it.
+  isoImage.storeContents = [
+    beelinkSystem
+    beelinkDisko
+  ];
+
+  # Default is "zstd -Xcompression-level 19", which takes far too long over a
+  # ~14 GiB store. Level 6 builds in a fraction of the time; the image is a
+  # little larger, which does not matter on a 28 GiB stick.
+  isoImage.squashfsCompression = "zstd -Xcompression-level 6";
 
   # This flake's own source, copied into the image. `self` is the store path of
   # the tree the ISO was built from, so the image is a snapshot — rebuild it
@@ -41,9 +94,12 @@
       sops
     ])
     ++ [
-      # Provisioning for disko-managed hosts (modules/disk/kiosk.nix). Baked in
-      # because the image has to work with no network — `nix run …#disko-install`
-      # would need to fetch it.
+      # The one-command offline install.
+      installKiosk
+      # Escape hatches if install-kiosk does not fit the situation — e.g. the
+      # target disk differs from myConfig.diskDevice, which the prebuilt
+      # diskoScript has baked in. `disko-install --disk main <dev>` overrides
+      # it, but re-evaluates the flake and so needs network.
       disko.packages.${pkgs.stdenv.hostPlatform.system}.disko-install
       disko.packages.${pkgs.stdenv.hostPlatform.system}.default
     ];
