@@ -5,6 +5,7 @@
     nano
     git
     wget
+    just # Recipe runner for this flake's justfile
     pinentry-gnome3 # GPG passphrase entry (used by gpg-agent)
   ];
 }
