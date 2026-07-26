@@ -109,10 +109,5 @@ in {
 
     # Controller udev rules (uaccess) without installing Steam.
     hardware.steam-hardware.enable = true;
-
-    # Deploy target for game builds; primary user can rsync without sudo.
-    systemd.tmpfiles.rules = [
-      "d /opt/kiosk 0755 ${config.myConfig.primaryUser} users - -"
-    ];
   };
 }

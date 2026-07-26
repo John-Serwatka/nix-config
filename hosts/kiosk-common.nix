@@ -4,7 +4,11 @@
 # into the host's game. The `work` specialisation in the systemd-boot menu
 # (default 5s timeout) gives the regular Plasma desktop for game deploys and
 # basic working; `withrin` is the login there.
-{lib, ...}: {
+{
+  config,
+  lib,
+  ...
+}: {
   imports = [
     # Core
     ../modules/core/nix.nix
@@ -22,6 +26,13 @@
   ];
 
   myConfig.kiosk.enable = true;
+
+  # Deploy target for game builds; primary user can rsync without sudo. Lives
+  # here (not in kiosk.nix's mkIf cfg.enable) so it still exists when booted
+  # straight into the `work` specialisation, which force-disables the kiosk.
+  systemd.tmpfiles.rules = [
+    "d /opt/kiosk 0755 ${config.myConfig.primaryUser} users - -"
+  ];
 
   myConfig.networking.enableManager = true;
 
