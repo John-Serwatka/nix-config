@@ -130,3 +130,28 @@ clean:
 
 # ─── Deployment ───────────────────────────────────────────────────────────────
 # TODO: remote deploy (nixos-rebuild --target-host / deploy-rs).
+
+# ─── Kiosk game deploys ───────────────────────────────────────────────────────
+# Game builds ship independently of NixOS (see modules/services/kiosk.nix):
+# rsync an export into its own directory under /opt/kiosk on the kiosk host,
+# then flip the `current` symlink at it. `host` is an SSH-reachable name (e.g.
+# optiplex, beelink); `game` names the directory under /opt/kiosk; `dir` is
+# the local exported build (must contain an executable run.sh).
+
+# Sync an exported build to <host>:/opt/kiosk/<game>/ and flip `current` at it.
+[group('kiosk')]
+kiosk-deploy dir game host:
+    chmod +x {{ dir }}/run.sh {{ dir }}/*.x86_64
+    ssh withrin@{{ host }} 'mkdir -p /opt/kiosk/{{ game }}'
+    rsync -av --delete {{ dir }}/ withrin@{{ host }}:/opt/kiosk/{{ game }}/
+    ssh withrin@{{ host }} 'ln -sfn {{ game }} /opt/kiosk/current'
+
+# Reboot a kiosk host to pick up a freshly deployed build.
+[group('kiosk')]
+kiosk-reboot host:
+    ssh withrin@{{ host }} sudo reboot
+
+# Tail the kiosk launcher's logs on a host.
+[group('kiosk')]
+kiosk-logs host:
+    ssh withrin@{{ host }} 'journalctl -t kiosk -b -f'
