@@ -14,6 +14,11 @@ with lib; {
     description = "Enable NetworkManager (manages wired & wireless interfaces).";
   };
 
+  networking.firewall.interfaces."enp45s0f3u2u2c2" = {
+    allowedUDPPorts = [ 53 67 ];
+    allowedTCPPorts = [ 53 ];
+  };
+
   options.myConfig.networking.openTCPPorts = mkOption {
     type = types.listOf types.port;
     default = [];
