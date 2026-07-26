@@ -159,6 +159,16 @@ in {
       # Font rasterisation for anything not using a bundled font
       fontconfig
       freetype
+
+      # GameMaker runner (Horde of Viscount). Unlike the Godot entries above,
+      # this engine *links* its libraries — they show up in DT_NEEDED, so the
+      # loader aborts at startup if any is missing rather than degrading.
+      stdenv.cc.cc.lib # libstdc++.so.6
+      zlib # libz.so.1
+      libxxf86vm # libXxf86vm.so.1
+      libGLU # libGLU.so.1
+      openal # libopenal.so.1
+      curlWithGnuTls # ships the Debian-compat libcurl-gnutls.so.4 soname
     ];
   };
 }
