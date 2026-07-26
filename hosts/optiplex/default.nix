@@ -8,7 +8,10 @@
     ../../modules/services/thermald.nix
   ];
 
-  myConfig.kiosk.gameName = "Veilkeeper";
+  myConfig.kiosk = {
+    gameName = "Veilkeeper";
+    command = "/opt/kiosk/veilkeeper/run.sh";
+  };
 
   # Intel iGPU (VA-API stack and modesetting driver come from graphics.nix).
   myConfig.graphics.vendor = "intel";
