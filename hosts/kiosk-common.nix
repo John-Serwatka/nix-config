@@ -50,6 +50,17 @@
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINx1ujbVZk2s/RRjVfqLOyNS4HfV1vTNLLivpFIqP0YI withrin@desktop"
   ];
 
+  # Remote *config* deploys (`just deploy <host>`): nixos-rebuild builds on the
+  # desktop and nix-copy-closure pushes the result here. Those paths are built
+  # locally and therefore unsigned, and only a trusted user may add unsigned
+  # paths to the store — without this the copy fails with "lacks a signature by
+  # a trusted key". Root is trusted by default but cannot log in over SSH here
+  # (no key, PermitRootLogin prohibit-password), so the deploy user needs it.
+  #
+  # This is effectively root on the box, but that account already has wheel and
+  # is the only one with an authorized key, so it grants nothing new.
+  nix.settings.trusted-users = [config.myConfig.primaryUser];
+
   # WiFi/GPU firmware blobs (the Beelink has wireless; harmless on the OptiPlex).
   hardware.enableRedistributableFirmware = true;
 
