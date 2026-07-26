@@ -52,6 +52,68 @@ and secrets file exist the secrets layer is inert, so the config still builds.
 The Syncthing GUI password must **not** be committed (a stale one already leaked
 in git history — rotate it); set it in the Syncthing web UI instead.
 
+## Game kiosks
+
+`optiplex` and `beelink` boot straight into a game (`hosts/kiosk-common.nix`,
+`modules/services/kiosk.nix`). greetd autologins a passwordless `kiosk` user
+whose session is a supervising launcher running the game fullscreen under
+gamescope, relaunching it whenever it exits.
+
+The boot menu also carries a `work` specialisation — Plasma 6 + SDDM with the
+kiosk force-disabled — for doing maintenance on the box itself.
+
+### Two independent deploys
+
+A kiosk ships in two halves, on separate schedules:
+
+| | what it changes | command |
+| --- | --- | --- |
+| System config | what the machine *is* | `just deploy <host>` |
+| Game build | what the machine *runs* | `just kiosk-deploy <dir> <game> <host>` |
+
+`just deploy` builds locally and copies the closure over SSH, so the kiosks
+never compile anything. `just kiosk-deploy` is pure rsync — no Nix, no root, no
+reboot: it syncs an export into `/opt/kiosk/<game>/` and flips the
+`/opt/kiosk/current` symlink at it.
+
+The hinge is `myConfig.kiosk.command`, which defaults to
+`/opt/kiosk/current/run.sh`. The config never names a game, it points at a
+symlink — so which game a kiosk runs is a deploy-time decision, and
+`myConfig.kiosk.gameName` is only a log label.
+
+The two halves are independent but not unrelated: **when a change touches the
+`/opt/kiosk` layout, ship both.** A game deployed into a layout the running
+config doesn't expect doesn't error, it just sits in the launcher's retry loop.
+Check with `just kiosk-logs <host>`.
+
+### Bootstrapping a new kiosk
+
+`nixos-rebuild --target-host` builds locally, so the paths it pushes are
+unsigned, and only a trusted user may add unsigned paths to a store. Root is
+trusted by default but cannot log in over SSH here (no key,
+`PermitRootLogin prohibit-password`), so `hosts/kiosk-common.nix` adds the
+primary user to `nix.settings.trusted-users`.
+
+That setting cannot install itself remotely. Each new kiosk needs **one** local
+rebuild on the box before `just deploy` works against it:
+
+```bash
+sudo nixos-rebuild switch --flake .#<host>
+```
+
+### Game builds are foreign binaries
+
+Godot exports resolve their display, input and audio libraries with `dlopen` at
+runtime rather than linking them, so `ldd` on an export lists only glibc and
+there is nothing for autoPatchelf to rewrite. `nix-ld` handles those lookups,
+but its default library set carries no X11 or Wayland — without help the game
+fails every display driver in turn and exits before opening a window.
+
+`modules/services/kiosk.nix` therefore lists the X11/Wayland/GL/Vulkan/audio
+libraries in `programs.nix-ld.libraries`. Any other non-Nix binary dropped into
+`/opt/kiosk` needs its own dlopen'd dependencies added there; a
+`cannot open shared object file` in `journalctl -t kiosk` points at that list.
+
 ## Spotify via Flatpak
 
 If you prefer running Spotify through Flatpak, make sure the Flatpak
