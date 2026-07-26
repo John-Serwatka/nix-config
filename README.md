@@ -114,6 +114,61 @@ libraries in `programs.nix-ld.libraries`. Any other non-Nix binary dropped into
 `/opt/kiosk` needs its own dlopen'd dependencies added there; a
 `cannot open shared object file` in `journalctl -t kiosk` points at that list.
 
+## Installer USB
+
+`hosts/installer/default.nix` builds a NixOS installer image with this flake
+already on it, so a machine that has never been set up needs no clone, no
+network and no credentials to install from:
+
+```bash
+just iso                     # -> result/iso/nixos-installer-withrin.iso
+lsblk                        # confirm the target device first
+sudo dd if=result/iso/*.iso of=/dev/sdX bs=4M status=progress conv=fsync
+```
+
+The flake lands at `/etc/nix-config` on the booted image, and your SSH key is
+authorized for root so a headless box can be installed from the desktop.
+
+Partition, format, mount, then install the host by name:
+
+```bash
+parted /dev/sda -- mklabel gpt
+parted /dev/sda -- mkpart ESP fat32 1MiB 1GiB
+parted /dev/sda -- set 1 esp on
+parted /dev/sda -- mkpart root ext4 1GiB 100%
+mkfs.fat -F32 -n boot /dev/sda1
+mkfs.ext4 -L nixos /dev/sda2
+
+mount /dev/disk/by-label/nixos /mnt
+mkdir -p /mnt/boot && mount /dev/disk/by-label/boot /mnt/boot
+
+nixos-install --flake /etc/nix-config#optiplex
+```
+
+The image is a **snapshot** of the flake at build time — rebuild it whenever the
+config it should install has changed.
+
+### The hardware.nix caveat
+
+Each host's `hardware.nix` holds the filesystem UUIDs of the specific machine it
+was generated on, so installing a host onto *different* hardware needs a fresh
+one:
+
+```bash
+nixos-generate-config --root /mnt --no-filesystems
+```
+
+Copy the result into `hosts/<host>/hardware.nix` and commit it. Skipping this
+step is how `hosts/optiplex/hardware.nix` sat as an unbootable placeholder in
+git while the real file existed only in the working tree on the machine — the
+box could not be deployed to from anywhere else.
+
+[disko](https://github.com/nix-community/disko) would remove both problems at
+once: partitioning becomes declarative per host, and filesystems are described
+by label in the config rather than discovered per machine, so no per-machine
+`hardware.nix` is needed and `disko-install` replaces the manual `parted` block
+above. Worth doing before provisioning more kiosks.
+
 ## Spotify via Flatpak
 
 If you prefer running Spotify through Flatpak, make sure the Flatpak

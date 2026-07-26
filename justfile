@@ -128,6 +128,16 @@ clean:
 # ─── VM testing ───────────────────────────────────────────────────────────────
 # TODO: build + run a throwaway VM of a host (nixos-rebuild build-vm).
 
+# ─── Installer image ──────────────────────────────────────────────────────────
+
+# Build the bootable USB installer carrying this flake (see hosts/installer).
+# Write it with:
+#   sudo dd if=result/iso/*.iso of=/dev/sdX bs=4M status=progress conv=fsync
+# Check the device with `lsblk` first — dd to the wrong one erases that disk.
+[group('installer')]
+iso:
+    nix build .#installer
+
 # ─── Deployment ───────────────────────────────────────────────────────────────
 # Push this flake's *system config* to another machine over SSH. The build runs
 # locally and only the closure is copied, so the kiosks never compile anything.
