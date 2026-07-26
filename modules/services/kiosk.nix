@@ -37,6 +37,9 @@ with lib; let
     # Tag everything for `journalctl -t kiosk`.
     exec &> >(${pkgs.systemd}/bin/systemd-cat -t kiosk)
 
+    # readlink/basename/dirname/sleep, rather than trusting the session PATH.
+    export PATH=${makeBinPath [pkgs.coreutils]}:$PATH
+
     game=${escapeShellArg cfg.command}
     while true; do
       if [[ ! -x "$game" ]]; then
@@ -44,22 +47,23 @@ with lib; let
         sleep 10
         continue
       fi
-      echo ${escapeShellArg "starting ${cfg.gameName}"}
+
+      # Label log lines with the directory the entrypoint actually resolves to
+      # — i.e. what /opt/kiosk/current points at — so the name follows whatever
+      # was last deployed instead of drifting from a value baked in per host.
+      # Resolved every iteration, so a redeploy is picked up without a restart.
+      name=$(basename "$(dirname "$(readlink -f "$game")")")
+
+      echo "starting $name"
       ${gamescopeBin} ${escapeShellArgs cfg.gamescopeArgs} -- "$game"
       status=$?
-      echo ${escapeShellArg "${cfg.gameName} exited with status"} "$status — relaunching in 2s"
+      echo "$name exited with status $status — relaunching in 2s"
       sleep 2
     done
   '';
 in {
   options.myConfig.kiosk = {
     enable = mkEnableOption "arcade-style game kiosk session";
-
-    gameName = mkOption {
-      type = types.str;
-      default = "the game";
-      description = "Display name of the game, used in launcher log lines.";
-    };
 
     command = mkOption {
       type = types.str;

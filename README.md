@@ -78,8 +78,9 @@ reboot: it syncs an export into `/opt/kiosk/<game>/` and flips the
 
 The hinge is `myConfig.kiosk.command`, which defaults to
 `/opt/kiosk/current/run.sh`. The config never names a game, it points at a
-symlink — so which game a kiosk runs is a deploy-time decision, and
-`myConfig.kiosk.gameName` is only a log label.
+symlink — so which game a kiosk runs is a deploy-time decision. The launcher
+labels its log lines with the directory that symlink resolves to, re-checked on
+every relaunch, so the name follows deploys rather than a per-host setting.
 
 The two halves are independent but not unrelated: **when a change touches the
 `/opt/kiosk` layout, ship both.** A game deployed into a layout the running

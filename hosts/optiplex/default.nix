@@ -8,9 +8,9 @@
     ../../modules/services/thermald.nix
   ];
 
-  # Which game runs here is a deploy-time decision (see modules/services/kiosk.nix);
-  # gameName is just the log label — keep it in sync with whatever's deployed.
-  myConfig.kiosk.gameName = "Veilkeeper";
+  # Which game runs here is a deploy-time decision (see modules/services/kiosk.nix)
+  # and the launcher labels its logs from the deployed directory, so nothing here
+  # names a game.
 
   # Intel iGPU (VA-API stack and modesetting driver come from graphics.nix).
   myConfig.graphics.vendor = "intel";
