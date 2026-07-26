@@ -129,7 +129,36 @@ clean:
 # TODO: build + run a throwaway VM of a host (nixos-rebuild build-vm).
 
 # ─── Deployment ───────────────────────────────────────────────────────────────
-# TODO: remote deploy (nixos-rebuild --target-host / deploy-rs).
+# Push this flake's *system config* to another machine over SSH. The build runs
+# locally and only the closure is copied, so the kiosks never compile anything.
+#
+# `host` has to work as both an SSH name and a nixosConfigurations attribute in
+# flake.nix — that holds for optiplex and beelink.
+#
+# withrin's sudo on the targets is password-protected (no NOPASSWD), so
+# --ask-sudo-password prompts once per deploy; plain `--sudo` would just hang.
+#
+# This is the *config* half of a kiosk update — `kiosk-deploy` below ships the
+# game build. A game deployed into a layout the running config doesn't know
+# about sits in the launcher's retry loop forever, so when a change touches
+# modules/services/kiosk.nix, run both.
+
+# Build <host>'s config locally, copy it over, and activate it on <host>.
+[group('deploy')]
+deploy host:
+    nixos-rebuild switch --flake .#{{ host }} \
+        --target-host withrin@{{ host }} --ask-sudo-password
+
+# Like `deploy`, but only sets it as the boot default (no activation now).
+[group('deploy')]
+deploy-boot host:
+    nixos-rebuild boot --flake .#{{ host }} \
+        --target-host withrin@{{ host }} --ask-sudo-password
+
+# Build another host's config locally, without touching that machine.
+[group('deploy')]
+deploy-build host:
+    nixos-rebuild build --flake .#{{ host }}
 
 # ─── Kiosk game deploys ───────────────────────────────────────────────────────
 # Game builds ship independently of NixOS (see modules/services/kiosk.nix):
