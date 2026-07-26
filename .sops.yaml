@@ -6,9 +6,15 @@
 keys:
   - &desktop age14cda7x4t7fd92f3j4hvw3p2lrfe68zw4fgr8petjlzrr0m2ze4pq60gqky
   - &laptop age1janda6uj5zfggma8en4mjlq7ymg44wyrjjvf9feydcj3au9z2c7qkr7nwt
-  # Kiosks. The private key lives at ~/.config/sops/age/keys.txt on each box
-  # (see modules/core/sops.nix) and is NOT in this repo — back it up separately,
-  # since losing it means that host can no longer decrypt.
+  # Kiosks: derived from each box's /etc/ssh/ssh_host_ed25519_key, which
+  # sops-nix imports automatically (see modules/core/sops.nix). Nothing to place
+  # by hand on a fresh install. Get a new box's key with:
+  #   ssh withrin@<host> 'cat /etc/ssh/ssh_host_ed25519_key.pub' | ssh-to-age
+  - &optiplex_host age12pa54mmpftjjhcsfljunykgclun36ynky8pwvjlw7m668rr9ddqsnnvec3
+  - &beelink_host age13z3c972fczjhcgj2vxfm8j6rp84ghfynfdwpgxmfa39vuah3fccq8ujaa7
+
+  # Superseded manual kiosk keys. Kept until both boxes are confirmed decrypting
+  # via their host keys, then drop these and re-run `sops updatekeys`.
   - &optiplex age1rgkxvkw5elmudgs0ecuvurq9cugttltxlnhlcx86qdw7pghwsyxsdt8u7a
   - &beelink age126sz7anr2hcx8jj5s2acdw47lfxw5kuwjafwcdj87wldptd7zswq7u2y7x
 creation_rules:
@@ -17,5 +23,7 @@ creation_rules:
       - age:
           - *desktop
           - *laptop
+          - *optiplex_host
+          - *beelink_host
           - *optiplex
           - *beelink

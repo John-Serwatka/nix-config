@@ -4,12 +4,30 @@
 # live in ./.sops.yaml; encrypted material lives under ./secrets (safe to commit).
 #
 # ── Decryption key ────────────────────────────────────────────────────────────
-# Each machine holds a private age key OUTSIDE the repo at
-#   /home/<primaryUser>/.config/sops/age/keys.txt   (mode 600)
-# generated once with `age-keygen`. Its PUBLIC key is a recipient in .sops.yaml.
-# Back this file up — losing it means the secrets can't be decrypted. On a fresh
-# install, place the key file before the first switch (the user password is
-# decrypted from it during account creation).
+# Two mechanisms, picked automatically by whether the host runs sshd:
+#
+# * Hosts WITH sshd (the kiosks) decrypt with an age identity derived from
+#   /etc/ssh/ssh_host_ed25519_key. sops-nix does this by default via
+#   `sops.age.sshKeyPaths`, and nothing has to be placed by hand: install the
+#   box, read its derived key with
+#       ssh withrin@<host> 'cat /etc/ssh/ssh_host_ed25519_key.pub' | ssh-to-age
+#   add it to .sops.yaml, `sops updatekeys secrets/secrets.yaml`, and deploy.
+#   The host key is generated at install time and persists, so there is no
+#   separate secret to copy around, lose, or back up.
+#
+# * Hosts WITHOUT sshd (desktop, laptop) have no host key — sops-nix's
+#   defaultImportKeys returns [] when services.openssh.enable is false — so
+#   they keep a manual age key OUTSIDE the repo at
+#     /home/<primaryUser>/.config/sops/age/keys.txt   (mode 600)
+#   generated once with `age-keygen`. Back that file up; losing it means those
+#   secrets can't be decrypted. That key is also what you use to *edit*
+#   secrets, so it stays a recipient regardless.
+#
+# Setting age.keyFile unconditionally is what made the first kiosk install
+# painful: sops-install-secrets treats a configured-but-missing keyFile as a
+# fatal error, so a fresh box failed activation until the file was placed by
+# hand — which needed a login, whose password came from the secret it could not
+# yet decrypt.
 #
 # ── Adding a secret ───────────────────────────────────────────────────────────
 # 1. Edit the encrypted store:  SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt \
@@ -33,10 +51,19 @@
 #   * a writable runtime config generated from an encrypted seed, or
 #   * a manual per-machine rclone config kept outside the repo.
 # Until then, keep sops focused on stable secrets (password hashes, API tokens, …).
-{config, ...}: {
+{
+  config,
+  lib,
+  ...
+}: {
   sops = {
     defaultSopsFile = ../../secrets/secrets.yaml;
-    age.keyFile = "/home/${config.myConfig.primaryUser}/.config/sops/age/keys.txt";
+
+    # Only where there is no host key to derive from; see the header. Left
+    # unset (null) on sshd hosts so age.sshKeyPaths takes over.
+    age.keyFile =
+      lib.mkIf (!config.services.openssh.enable)
+      "/home/${config.myConfig.primaryUser}/.config/sops/age/keys.txt";
 
     secrets = {
       # User login password hash. neededForUsers makes it available early enough
