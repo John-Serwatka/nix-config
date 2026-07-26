@@ -148,11 +148,51 @@ nixos-install --flake /etc/nix-config#optiplex
 The image is a **snapshot** of the flake at build time — rebuild it whenever the
 config it should install has changed.
 
-### The hardware.nix caveat
+### Disko hosts install in one command
 
-Each host's `hardware.nix` holds the filesystem UUIDs of the specific machine it
-was generated on, so installing a host onto *different* hardware needs a fresh
-one:
+Hosts that import `modules/disk/kiosk.nix` declare their own partitioning with
+[disko](https://github.com/nix-community/disko), so the whole block above
+collapses to:
+
+```bash
+lsblk                        # confirm the device first
+disko-install --flake /etc/nix-config#beelink --disk main /dev/nvme0n1
+```
+
+That partitions, formats, mounts and installs. `--disk main <device>` overrides
+`myConfig.diskDevice`, so the same config installs onto whatever disk the
+replacement hardware presents. `disko-install` is baked into the ISO because
+the image has to work without network.
+
+The shared kiosk layout is GPT: a 1 GiB ESP at `/boot`, an 8 GiB swap
+partition, and ext4 root taking the rest. Filesystems resolve by partition
+label (`/dev/disk/by-partlabel/disk-main-*`), never by UUID.
+
+### Which hosts use disko
+
+Only the ones that get reinstalled:
+
+| Host | Filesystems from | Why |
+| --- | --- | --- |
+| `beelink` | disko | Kiosk — reprovisioned, spare hardware |
+| `optiplex` | `hardware.nix` | Kiosk, but already installed; convert at its next reinstall |
+| `desktop`, `laptop` | `hardware.nix` | Installed once; disko earns nothing |
+
+`hardware.nix` is not legacy — it is still what `nixos-generate-config` writes
+and what upstream expects. Disko is an add-on that pays off in proportion to
+how often a machine is reinstalled, and it replaces only the `fileSystems` and
+`swapDevices` blocks; kernel modules and microcode stay in `hardware.nix`
+either way.
+
+Converting a *running* host is not a rebuild — disko points filesystems at
+`/dev/disk/by-partlabel/disk-main-*`, which will not match partitions created
+by hand. Do it as part of a reinstall, never as a `nixos-rebuild switch`.
+
+### The hardware.nix caveat (non-disko hosts)
+
+For hosts still using `hardware.nix`, that file holds the filesystem UUIDs of
+the specific machine it was generated on, so installing onto *different*
+hardware needs a fresh one:
 
 ```bash
 nixos-generate-config --root /mnt --no-filesystems
@@ -162,12 +202,6 @@ Copy the result into `hosts/<host>/hardware.nix` and commit it. Skipping this
 step is how `hosts/optiplex/hardware.nix` sat as an unbootable placeholder in
 git while the real file existed only in the working tree on the machine — the
 box could not be deployed to from anywhere else.
-
-[disko](https://github.com/nix-community/disko) would remove both problems at
-once: partitioning becomes declarative per host, and filesystems are described
-by label in the config rather than discovered per machine, so no per-machine
-`hardware.nix` is needed and `disko-install` replaces the manual `parted` block
-above. Worth doing before provisioning more kiosks.
 
 ## Spotify via Flatpak
 

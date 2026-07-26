@@ -1,11 +1,13 @@
-# hosts/beelink/hardware.nix — PLACEHOLDER hardware configuration
+# hosts/beelink/hardware.nix — Beelink SER kernel/firmware detail
 #
-# ┌──────────────────────────────────────────────────────────────────────────┐
-# │ TODO: replace this ENTIRE file with the output of `nixos-generate-config`│
-# │ run on the actual Beelink SER. The values below only exist so the flake  │
-# │ evaluates before the box is installed — they will NOT boot real hardware.│
-# └──────────────────────────────────────────────────────────────────────────┘
+# No fileSystems or swapDevices here: disko owns them (modules/disk/kiosk.nix),
+# which is why this file has no machine-specific UUIDs and survives a move to
+# replacement hardware. Everything below is generic to the platform.
+#
+# If a future Beelink needs different initrd modules, regenerate with
+# `nixos-generate-config --no-filesystems` and copy the boot.* lines only.
 {
+  config,
   lib,
   modulesPath,
   ...
@@ -19,20 +21,8 @@
   boot.kernelModules = ["kvm-amd"];
   boot.extraModulePackages = [];
 
-  fileSystems."/" = {
-    device = "/dev/disk/by-label/nixos";
-    fsType = "ext4";
-  };
-
-  fileSystems."/boot" = {
-    device = "/dev/disk/by-label/boot";
-    fsType = "vfat";
-    options = ["fmask=0022" "dmask=0022"];
-  };
-
-  swapDevices = [];
-
   networking.useDHCP = lib.mkDefault true;
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
+  hardware.cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
 }

@@ -9,6 +9,11 @@
     # Encrypted secrets management (see modules/core/sops.nix).
     sops-nix.url = "github:Mic92/sops-nix";
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
+
+    # Declarative disk partitioning (see modules/disk/kiosk.nix). Used by the
+    # kiosks, which get reprovisioned; desktop/laptop keep their hardware.nix.
+    disko.url = "github:nix-community/disko";
+    disko.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs = {
@@ -16,10 +21,11 @@
     nixpkgs,
     home-manager,
     sops-nix,
+    disko,
     ...
   }: let
     system = "x86_64-linux";
-    mkHost = import ./lib/mkHost.nix {inherit nixpkgs home-manager sops-nix;};
+    mkHost = import ./lib/mkHost.nix {inherit nixpkgs home-manager sops-nix disko;};
   in {
     # `nix fmt` formats every .nix file with Alejandra.
     formatter.${system} = nixpkgs.legacyPackages.${system}.alejandra;
@@ -60,7 +66,7 @@
       # — the installation-cd profile supplies its accounts. `self` is passed so
       # the image can embed the flake source it was built from.
       installer = nixpkgs.lib.nixosSystem {
-        specialArgs = {inherit self;};
+        specialArgs = {inherit self disko;};
         modules = [
           ./hosts/installer/default.nix
           {nixpkgs.hostPlatform = system;}

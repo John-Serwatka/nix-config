@@ -12,6 +12,7 @@
 # See the README for the full sequence (partitioning still happens by hand —
 # see the disko note there).
 {
+  disko,
   lib,
   modulesPath,
   pkgs,
@@ -28,16 +29,24 @@
   environment.etc."nix-config".source = self;
 
   # Tools for partitioning, and for working with the flake once booted.
-  environment.systemPackages = with pkgs; [
-    git
-    just
-    parted
-    gptfdisk
-    rsync
-    # sops/age so a freshly installed host's secrets can be rekeyed on the spot
-    age
-    sops
-  ];
+  environment.systemPackages =
+    (with pkgs; [
+      git
+      just
+      parted
+      gptfdisk
+      rsync
+      # sops/age so a freshly installed host's secrets can be rekeyed on the spot
+      age
+      sops
+    ])
+    ++ [
+      # Provisioning for disko-managed hosts (modules/disk/kiosk.nix). Baked in
+      # because the image has to work with no network — `nix run …#disko-install`
+      # would need to fetch it.
+      disko.packages.${pkgs.stdenv.hostPlatform.system}.disko-install
+      disko.packages.${pkgs.stdenv.hostPlatform.system}.default
+    ];
 
   # Needed to install *from* the baked-in flake; the minimal ISO has neither.
   nix.settings.experimental-features = ["nix-command" "flakes"];

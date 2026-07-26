@@ -14,6 +14,7 @@
   nixpkgs,
   home-manager,
   sops-nix,
+  disko,
 }: {
   hostname,
   system ? "x86_64-linux",
@@ -32,6 +33,9 @@ nixpkgs.lib.nixosSystem {
       ../modules/core/users.nix
       home-manager.nixosModules.home-manager
       sops-nix.nixosModules.sops
+      # Inert unless a host sets disko.devices (see modules/disk/kiosk.nix), so
+      # this costs the desktop and laptop nothing.
+      disko.nixosModules.disko
       {
         # Overrides the mkDefault in each host's generated hardware.nix
         # (same value today; mkHost stays the single source of truth).
