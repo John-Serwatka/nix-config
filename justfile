@@ -207,6 +207,17 @@ kiosk-deploy dir game host:
 kiosk-deploy-hov host:
     just kiosk-deploy {{ hov_dir }} HordeOfViscount {{ host }}
 
+# The launcher loop survives this: it sees the game exit and starts it again
+# after 2s, so a freshly rsynced build comes up without a reboot. Matches on the
+# entrypoint path rather than a process name, so it works whatever the engine
+# calls its binary. `-t` because the game runs as the kiosk user, and withrin's
+# sudo needs a password.
+
+# Relaunch the game to pick up a freshly deployed build, without rebooting.
+[group('kiosk')]
+kiosk-restart host:
+    ssh -t withrin@{{ host }} 'sudo pkill -u kiosk -f /opt/kiosk/current/run.sh'
+
 # Reboot a kiosk host to pick up a freshly deployed build.
 [group('kiosk')]
 kiosk-reboot host:
