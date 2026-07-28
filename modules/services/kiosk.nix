@@ -52,10 +52,22 @@ with lib; let
       # — i.e. what /opt/kiosk/current points at — so the name follows whatever
       # was last deployed instead of drifting from a value baked in per host.
       # Resolved every iteration, so a redeploy is picked up without a restart.
-      name=$(basename "$(dirname "$(readlink -f "$game")")")
+      gamedir=$(dirname "$(readlink -f "$game")")
+      name=$(basename "$gamedir")
+
+      # A build may ship a `gamescope-args` file with extra flags — typically
+      # `-w`/`-h` to declare its native render size so gamescope can upscale it.
+      # That belongs with the game rather than the host: which game a kiosk runs
+      # is a deploy-time decision, so its display settings have to be too.
+      # Word splitting is intended here.
+      extra=()
+      if [[ -r "$gamedir/gamescope-args" ]]; then
+        extra=($(cat "$gamedir/gamescope-args"))
+        echo "extra gamescope args from build: ''${extra[*]}"
+      fi
 
       echo "starting $name"
-      ${gamescopeBin} ${escapeShellArgs cfg.gamescopeArgs} -- "$game"
+      ${gamescopeBin} ${escapeShellArgs cfg.gamescopeArgs} "''${extra[@]}" -- "$game"
       status=$?
       echo "$name exited with status $status — relaunching in 2s"
       sleep 2
