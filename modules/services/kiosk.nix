@@ -78,9 +78,19 @@ in {
 
     gamescopeArgs = mkOption {
       type = types.listOf types.str;
-      default = ["-f"];
-      example = ["-f" "--adaptive-sync"];
-      description = "Arguments passed to gamescope ahead of the game command.";
+      default = ["-f" "--force-windows-fullscreen"];
+      example = ["-f" "--force-windows-fullscreen" "-S" "fit"];
+      description = ''
+        Arguments passed to gamescope ahead of the game command.
+
+        `--force-windows-fullscreen` resizes whatever window the game opens to
+        the nested display, which a kiosk always wants: `-f` alone only makes
+        *gamescope* fullscreen, so a game that opens a small window renders in
+        a corner of an otherwise black screen. Games that request fullscreen
+        themselves are unaffected.
+
+        Add `-S fit` if a game's aspect ratio ends up stretched.
+      '';
     };
 
     user = mkOption {
