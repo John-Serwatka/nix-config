@@ -273,21 +273,20 @@ kiosk-deploy-hov host: hov-prep
 
 # Notes for `run-local-win`: A/B partner to `run-local`. Sean's Windows build is
 # an NSIS installer, which 7z unpacks without running it — so no GUI installer
-# and no admin prompt. Proton then sees the game through XInput, which exposes
-# only real gamepads rather than every evdev node, so this is the way to tell
-# whether the ControllerStrategy crash is Linux-runner-specific.
+# and no admin prompt. Runs under Wine, which reaches gamepads through XInput
+# rather than enumerating every evdev node, so it isolates whether the
+# ControllerStrategy crash is specific to the GameMaker Linux runner.
 #
-# First run downloads the Steam Linux Runtime (~hundreds of MB) into
-# ~/.local/share/umu and builds a Wine prefix under Kiosk/win-prefix. Both are
-# why this is a desktop testing tool and not something on a kiosk yet.
+# Builds a Wine prefix under Kiosk/win-prefix on first run. Delete that
+# directory to start clean. This is a desktop diagnostic, not a kiosk path.
 
-# Run the Windows build of HoV under Proton, for comparison with run-local.
+# Run the Windows build of HoV under Wine, for comparison with run-local.
 [group('kiosk')]
 run-local-win:
     #!/usr/bin/env bash
     set -euo pipefail
-    if ! command -v 7z >/dev/null || ! command -v umu-run >/dev/null; then
-      exec nix shell nixpkgs#p7zip nixpkgs#umu-launcher -c just run-local-win
+    if ! command -v 7z >/dev/null || ! command -v wine64 >/dev/null; then
+      exec nix shell nixpkgs#p7zip nixpkgs#wine64 -c just run-local-win
     fi
     root="{{ hov_root }}"
     out="$root/win-build"
@@ -302,20 +301,17 @@ run-local-win:
       # NSIS scratch directories, not part of the game.
       rm -rf "$out/"'$PLUGINSDIR' "$out/"'$TEMP'
     fi
-    # Proton from nixpkgs rather than letting umu fetch one. Note the content
-    # lives in the `steamcompattool` output — the default output is a stub, and
-    # pointing PROTONPATH at it fails with "toolmanifest.vdf not found".
-    if [ -z "${PROTONPATH:-}" ]; then
-      PROTONPATH=$(nix build --no-link --print-out-paths --impure --expr \
-        '(builtins.getFlake (toString /home/withrin/nix-config)).inputs.nixpkgs.legacyPackages.x86_64-linux.proton-ge-bin.steamcompattool')
-    fi
-    export PROTONPATH
+    # Wine rather than Proton. umu-launcher insists on downloading the Steam
+    # Linux Runtime container and repo.steampowered.com currently answers 403,
+    # so Proton cannot start at all. For *this* purpose — finding out whether
+    # the ControllerStrategy crash follows the Windows build — Wine answers the
+    # same question: it exposes gamepads through XInput, not through every
+    # evdev node the way the GameMaker Linux runner does.
     export WINEPREFIX="$root/win-prefix"
-    export GAMEID=0
-    echo "==> proton: $PROTONPATH"
-    echo "==> prefix: $WINEPREFIX"
+    export WINEDEBUG="${WINEDEBUG:--all}"
+    echo "==> prefix: $WINEPREFIX  (created on first run)"
     cd "$out"
-    exec umu-run ./hov.exe
+    exec wine64 ./hov.exe
 
 # Run a kiosk build locally with the kiosk library environment.
 [group('kiosk')]
