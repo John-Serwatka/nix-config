@@ -302,9 +302,17 @@ run-local-win:
       # NSIS scratch directories, not part of the game.
       rm -rf "$out/"'$PLUGINSDIR' "$out/"'$TEMP'
     fi
+    # Proton from nixpkgs rather than letting umu fetch one. Note the content
+    # lives in the `steamcompattool` output — the default output is a stub, and
+    # pointing PROTONPATH at it fails with "toolmanifest.vdf not found".
+    if [ -z "${PROTONPATH:-}" ]; then
+      PROTONPATH=$(nix build --no-link --print-out-paths --impure --expr \
+        '(builtins.getFlake (toString /home/withrin/nix-config)).inputs.nixpkgs.legacyPackages.x86_64-linux.proton-ge-bin.steamcompattool')
+    fi
+    export PROTONPATH
     export WINEPREFIX="$root/win-prefix"
     export GAMEID=0
-    export PROTONPATH="''${PROTONPATH:-GE-Proton}"
+    echo "==> proton: $PROTONPATH"
     echo "==> prefix: $WINEPREFIX"
     cd "$out"
     exec umu-run ./hov.exe
