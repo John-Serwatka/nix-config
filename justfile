@@ -266,6 +266,23 @@ hov-prep:
 kiosk-deploy-hov host: hov-prep
     just kiosk-deploy {{ hov_dir }} HordeOfViscount {{ host }}
 
+# Notes for `run-local`: this runs the build on THIS machine with the exact
+# library set the kiosks expose through nix-ld, so a crash that reproduces here
+# is the build's, and one that only happens on a kiosk is environmental.
+# gamescope is deliberately not involved — plug a controller in and compare.
+
+# Run a kiosk build locally with the kiosk library environment.
+[group('kiosk')]
+run-local dir=hov_dir:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    sys=$(nix build --no-link --print-out-paths \
+      .#nixosConfigurations.optiplex.config.system.build.toplevel)
+    echo "==> library set: $sys/sw/share/nix-ld/lib"
+    echo "==> running {{ dir }}/run.sh"
+    cd "{{ dir }}"
+    LD_LIBRARY_PATH="$sys/sw/share/nix-ld/lib" exec ./run.sh
+
 # Show which build is live on a kiosk, and what else is sitting in /opt/kiosk.
 [group('kiosk')]
 kiosk-status host:
