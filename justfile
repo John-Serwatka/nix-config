@@ -271,6 +271,44 @@ kiosk-deploy-hov host: hov-prep
 # is the build's, and one that only happens on a kiosk is environmental.
 # gamescope is deliberately not involved — plug a controller in and compare.
 
+# Notes for `run-local-win`: A/B partner to `run-local`. Sean's Windows build is
+# an NSIS installer, which 7z unpacks without running it — so no GUI installer
+# and no admin prompt. Proton then sees the game through XInput, which exposes
+# only real gamepads rather than every evdev node, so this is the way to tell
+# whether the ControllerStrategy crash is Linux-runner-specific.
+#
+# First run downloads the Steam Linux Runtime (~hundreds of MB) into
+# ~/.local/share/umu and builds a Wine prefix under Kiosk/win-prefix. Both are
+# why this is a desktop testing tool and not something on a kiosk yet.
+
+# Run the Windows build of HoV under Proton, for comparison with run-local.
+[group('kiosk')]
+run-local-win:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if ! command -v 7z >/dev/null || ! command -v umu-run >/dev/null; then
+      exec nix shell nixpkgs#p7zip nixpkgs#umu-launcher -c just run-local-win
+    fi
+    root="{{ hov_root }}"
+    out="$root/win-build"
+    exe=$(ls -1t "$root"/Windows/*.exe 2>/dev/null | head -1 || true)
+    if [ -z "$exe" ]; then
+      echo "no .exe in $root/Windows" >&2; exit 1
+    fi
+    if [ ! -f "$out/hov.exe" ] || [ "$exe" -nt "$out/hov.exe" ]; then
+      echo "==> unpacking $(basename "$exe")"
+      rm -rf "$out"; mkdir -p "$out"
+      7z x -o"$out" "$exe" >/dev/null
+      # NSIS scratch directories, not part of the game.
+      rm -rf "$out/"'$PLUGINSDIR' "$out/"'$TEMP'
+    fi
+    export WINEPREFIX="$root/win-prefix"
+    export GAMEID=0
+    export PROTONPATH="''${PROTONPATH:-GE-Proton}"
+    echo "==> prefix: $WINEPREFIX"
+    cd "$out"
+    exec umu-run ./hov.exe
+
 # Run a kiosk build locally with the kiosk library environment.
 [group('kiosk')]
 run-local dir=hov_dir:
