@@ -227,8 +227,14 @@ hov-prep:
 
     # unzip/readelf come from cli.nix, but re-exec under a nix shell if this
     # host has not been rebuilt since they were added, so the recipe still works.
+    # Guarded so a tool that is still missing cannot re-exec this forever.
     if ! command -v unzip >/dev/null || ! command -v readelf >/dev/null; then
-      exec nix shell nixpkgs#unzip nixpkgs#binutils -c just hov-prep
+      if [ -n "${JUST_BOOTSTRAPPED:-}" ]; then
+        echo "unzip or readelf still missing inside nix shell — aborting" >&2
+        exit 1
+      fi
+      exec env JUST_BOOTSTRAPPED=1 \
+        nix shell nixpkgs#unzip nixpkgs#binutils -c just hov-prep
     fi
 
     archive=$(ls -1t "$root"/app/*.appimage "$root"/app/*.zip 2>/dev/null | head -1 || true)
@@ -285,8 +291,16 @@ kiosk-deploy-hov host: hov-prep
 run-local-win:
     #!/usr/bin/env bash
     set -euo pipefail
-    if ! command -v 7z >/dev/null || ! command -v wine64 >/dev/null; then
-      exec nix shell nixpkgs#p7zip nixpkgs#wine64 -c just run-local-win
+    # nixpkgs' wine64 package installs the binary as `wine`, not `wine64`.
+    # The guard matters more than the name: without it, a tool that is still
+    # missing inside the nix shell re-execs this recipe forever.
+    if ! command -v 7z >/dev/null || ! command -v wine >/dev/null; then
+      if [ -n "${JUST_BOOTSTRAPPED:-}" ]; then
+        echo "7z or wine still missing inside nix shell — aborting" >&2
+        exit 1
+      fi
+      exec env JUST_BOOTSTRAPPED=1 \
+        nix shell nixpkgs#p7zip nixpkgs#wine64 -c just run-local-win
     fi
     root="{{ hov_root }}"
     out="$root/win-build"
@@ -311,7 +325,7 @@ run-local-win:
     export WINEDEBUG="${WINEDEBUG:--all}"
     echo "==> prefix: $WINEPREFIX  (created on first run)"
     cd "$out"
-    exec wine64 ./hov.exe
+    exec wine ./hov.exe
 
 # Run a kiosk build locally with the kiosk library environment.
 [group('kiosk')]
