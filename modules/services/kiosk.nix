@@ -33,6 +33,12 @@ with lib; let
     then "/run/wrappers/bin/gamescope"
     else getExe config.programs.gamescope.package;
 
+  # Host-level gamescope arguments. Per-game ones come from a `gamescope-args`
+  # file in the deployed build (read in the loop below).
+  baseArgs =
+    cfg.gamescopeArgs
+    ++ optionals (cfg.refreshHz != null) ["-r" (toString cfg.refreshHz)];
+
   kioskRun = pkgs.writeShellScript "kiosk-run" ''
     # Tag everything for `journalctl -t kiosk`.
     exec &> >(${pkgs.systemd}/bin/systemd-cat -t kiosk)
@@ -67,7 +73,7 @@ with lib; let
       fi
 
       echo "starting $name"
-      ${gamescopeBin} ${escapeShellArgs cfg.gamescopeArgs} "''${extra[@]}" -- "$game"
+      ${gamescopeBin} ${escapeShellArgs baseArgs} "''${extra[@]}" -- "$game"
       status=$?
       echo "$name exited with status $status — relaunching in 2s"
       sleep 2
@@ -102,6 +108,25 @@ in {
         themselves are unaffected.
 
         Add `-S fit` if a game's aspect ratio ends up stretched.
+      '';
+    };
+
+    refreshHz = mkOption {
+      type = types.nullOr types.int;
+      default = null;
+      example = 120;
+      description = ''
+        Refresh rate to ask gamescope for, appended as `-r`.
+
+        Left unset, gamescope takes the display's EDID-preferred mode, which is
+        commonly 60 Hz even on a high-refresh panel. On VA monitors that shows
+        up as smearing or ghosting on moving elements, because their pixel
+        response and overdrive are tuned for high refresh.
+
+        This is a property of the monitor attached to a given kiosk, so set it
+        per host. Confirm what was actually selected with
+        `journalctl -t kiosk -b | grep "selecting mode"` — gamescope falls back
+        silently if the mode is unavailable or exceeds the link's bandwidth.
       '';
     };
 
