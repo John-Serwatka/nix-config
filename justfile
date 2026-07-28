@@ -198,14 +198,51 @@ kiosk-deploy dir game host:
         chmod +x "$f"
       fi
     done
+    # Content hash of the whole tree, so two deploys that share a directory name
+    # can still be told apart (a new build of the same game keeps its name).
+    build_id=$(find "{{ dir }}" -type f -print0 | sort -z | xargs -0 sha256sum \
+      | sha256sum | cut -c1-16)
+
     ssh withrin@{{ host }} 'mkdir -p /opt/kiosk/{{ game }}'
     rsync -av --delete "{{ dir }}/" withrin@{{ host }}:/opt/kiosk/{{ game }}/
+
+    # Provenance for `kiosk-status`. Written after the rsync, because --delete
+    # would otherwise remove it on the next deploy before it could be rewritten.
+    printf 'source:   %s\nbuild-id: %s\ndeployed: %s\nby:       %s\n' \
+      "{{ dir }}" "$build_id" "$(date -Is)" "$USER@$(hostname)" \
+      | ssh withrin@{{ host }} 'cat > /opt/kiosk/{{ game }}/.deploy-info'
+
     ssh withrin@{{ host }} 'ln -sfn {{ game }} /opt/kiosk/current'
 
 # Deploy Horde of Viscount from its export directory (see hov_dir at the top).
 [group('kiosk')]
 kiosk-deploy-hov host:
     just kiosk-deploy {{ hov_dir }} HordeOfViscount {{ host }}
+
+# Show which build is live on a kiosk, and what else is sitting in /opt/kiosk.
+[group('kiosk')]
+kiosk-status host:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    ssh withrin@{{ host }} 'bash -s' <<'REMOTE'
+    cur=$(readlink /opt/kiosk/current 2>/dev/null || echo "")
+    echo "live: ${cur:-(nothing deployed)}"
+    for d in /opt/kiosk/*/; do
+      [ -d "$d" ] || continue
+      # `current` matches this glob too (symlink to a directory) — skip it so it
+      # is not reported as a build of its own.
+      [ -L "${d%/}" ] && continue
+      n=$(basename "$d")
+      if [ "$n" = "$cur" ]; then echo; echo "* $n   <- current"; else echo; echo "  $n"; fi
+      [ -f "$d/VERSION" ] && echo "    version:  $(cat "$d/VERSION")"
+      if [ -f "$d/.deploy-info" ]; then
+        sed 's/^/    /' "$d/.deploy-info"
+      else
+        echo "    (no .deploy-info — predates provenance tracking)"
+      fi
+      echo "    entrypoint: $(ls -l "$d/run.sh" 2>/dev/null | awk '{print $5" bytes  "$6" "$7" "$8}')"
+    done
+    REMOTE
 
 # The launcher loop survives this: it sees the game exit and starts it again
 # after 2s, so a freshly rsynced build comes up without a reboot. Matches on the
