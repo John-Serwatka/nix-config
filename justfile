@@ -275,28 +275,41 @@ hov-prep:
 kiosk-deploy-hov host: hov-prep
     just kiosk-deploy {{ hov_dir }} HordeOfViscount {{ host }}
 
-# Unpack the Windows installer into win-build/ and add its wine launcher.
+# Stage the Windows build into win-build/ and add its wine launcher.
 [group('kiosk')]
 hov-prep-win:
     #!/usr/bin/env bash
     set -euo pipefail
-    if ! command -v 7z >/dev/null; then
-      if [ -n "${JUST_BOOTSTRAPPED:-}" ]; then
-        echo "7z still missing inside nix shell — aborting" >&2; exit 1
-      fi
-      exec env JUST_BOOTSTRAPPED=1 nix shell nixpkgs#p7zip -c just hov-prep-win
-    fi
     root="{{ hov_root }}"
     out="$root/win-build"
+
+    # A pre-extracted directory wins over an installer: it needs no 7z, no
+    # NSIS scratch cleanup, and is what Sean ships for the kiosk now. The
+    # installer path stays as a fallback for whatever arrives next.
+    srcdir=$(ls -1dt "$root"/Windows/*/ 2>/dev/null | head -1 || true)
     exe=$(ls -1t "$root"/Windows/*.exe 2>/dev/null | head -1 || true)
-    if [ -z "$exe" ]; then
-      echo "no .exe in $root/Windows" >&2; exit 1
+
+    if [ -n "$srcdir" ]; then
+      name=$(basename "${srcdir%/}")
+    elif [ -n "$exe" ]; then
+      name=$(basename "$exe")
+    else
+      echo "no build directory or .exe in $root/Windows" >&2; exit 1
     fi
-    name=$(basename "$exe")
 
     if [ -f "$out/VERSION" ] && [ "$(cat "$out/VERSION")" = "$name" ]; then
       echo "==> win-build/ already holds $name — refreshing overlay only"
+    elif [ -n "$srcdir" ]; then
+      echo "==> copying $name"
+      rm -rf "$out"; mkdir -p "$out"
+      cp -a "$srcdir." "$out/"
     else
+      if ! command -v 7z >/dev/null; then
+        if [ -n "${JUST_BOOTSTRAPPED:-}" ]; then
+          echo "7z still missing inside nix shell — aborting" >&2; exit 1
+        fi
+        exec env JUST_BOOTSTRAPPED=1 nix shell nixpkgs#p7zip -c just hov-prep-win
+      fi
       echo "==> unpacking $name (NSIS archive, not run)"
       rm -rf "$out"; mkdir -p "$out"
       7z x -o"$out" "$exe" >/dev/null
