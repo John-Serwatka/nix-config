@@ -245,16 +245,19 @@ hov-prep:
     name=$(basename "$archive")
 
     if [ -f "$root/build/VERSION" ] && [ "$(cat "$root/build/VERSION")" = "$name" ]; then
-      echo "build/ is already $name — nothing to do"
-      exit 0
+      echo "==> build/ already holds $name — refreshing overlay only"
+    else
+      echo "==> rebuilding build/ from $name"
+      # Wipe rather than unzip over the top, so files dropped from the new
+      # build do not linger. Everything in build/ is regenerated below.
+      rm -rf "$root/build"
+      mkdir -p "$root/build"
+      unzip -q "$archive" -d "$root/build"
     fi
 
-    echo "==> rebuilding build/ from $name"
-    # Wipe rather than unzip over the top, so files dropped from the new build
-    # do not linger. Everything in build/ is regenerated below.
-    rm -rf "$root/build"
-    mkdir -p "$root/build"
-    unzip -q "$archive" -d "$root/build"
+    # Always refresh the overlay. run.sh, the compat libraries and
+    # gamescope-args are ours rather than the vendor's, so editing one must not
+    # require a new archive to take effect.
     cp "$root"/compat/* "$root/build/"
     chmod +x "$root/build/run.sh"
     printf '%s\n' "$name" > "$root/build/VERSION"
@@ -292,19 +295,20 @@ hov-prep-win:
     name=$(basename "$exe")
 
     if [ -f "$out/VERSION" ] && [ "$(cat "$out/VERSION")" = "$name" ]; then
-      echo "win-build/ is already $name — nothing to do"
-      exit 0
+      echo "==> win-build/ already holds $name — refreshing overlay only"
+    else
+      echo "==> unpacking $name (NSIS archive, not run)"
+      rm -rf "$out"; mkdir -p "$out"
+      7z x -o"$out" "$exe" >/dev/null
+      # NSIS scratch directories, not part of the game.
+      rm -rf "$out/"'$PLUGINSDIR' "$out/"'$TEMP'
     fi
 
-    echo "==> unpacking $name (NSIS archive, not run)"
-    rm -rf "$out"; mkdir -p "$out"
-    7z x -o"$out" "$exe" >/dev/null
-    # NSIS scratch directories, not part of the game.
-    rm -rf "$out/"'$PLUGINSDIR' "$out/"'$TEMP'
+    # Always refresh the overlay — see the note in hov-prep.
     cp "$root"/compat-win/* "$out/"
     chmod +x "$out/run.sh"
     printf '%s\n' "$name" > "$out/VERSION"
-    echo "==> win-build/ is now $name"
+    echo "==> win-build/ is $name"
 
 # Deploy the Windows build of HoV as a separate game dir, for use under wine.
 [group('kiosk')]
