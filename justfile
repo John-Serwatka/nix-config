@@ -396,16 +396,21 @@ kiosk-status host:
     done
     REMOTE
 
-# The launcher loop survives this: it sees the game exit and starts it again
-# after 2s, so a freshly rsynced build comes up without a reboot. Matches on the
-# entrypoint path rather than a process name, so it works whatever the engine
-# calls its binary. `-t` because the game runs as the kiosk user, and withrin's
-# sudo needs a password.
+# Uses logind rather than pkill. The launcher, gamescope and the game all live
+# in the kiosk user's session scope (/user.slice/user-1000.slice/session-N.scope),
+# so terminate-user tells systemd to tear that cgroup down — one supported
+# operation instead of matching process names, and it catches every straggler,
+# including the wineserver/winedevice.exe that wine leaves behind and that a
+# name-based pkill would miss. greetd's restart=true then starts a fresh session.
+#
+# Costs a few seconds more than killing just the game, because PipeWire and the
+# logind session are rebuilt too. Worth it for something run at a venue: there
+# is no partial state left to reason about.
 
-# Relaunch the game to pick up a freshly deployed build, without rebooting.
+# Restart the kiosk session to pick up a freshly deployed build.
 [group('kiosk')]
 kiosk-restart host:
-    ssh -t withrin@{{ host }} 'sudo pkill -u kiosk -f /opt/kiosk/current/run.sh'
+    ssh -t withrin@{{ host }} 'sudo loginctl terminate-user kiosk'
 
 # Reboot a kiosk host to pick up a freshly deployed build.
 [group('kiosk')]
