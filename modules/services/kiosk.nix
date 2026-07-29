@@ -130,6 +130,24 @@ in {
       '';
     };
 
+    enableWine = mkOption {
+      type = types.bool;
+      default = false;
+      description = ''
+        Put Wine on the kiosk so a Windows game build can be deployed as a
+        fallback when a vendor's Linux export is broken.
+
+        Nothing else changes: which runtime a build uses is decided by the
+        `run.sh` that ships inside it, so a Windows build's run.sh calls `wine`
+        and a native one does not. Both can sit in /opt/kiosk simultaneously
+        with `current` flipped between them.
+
+        Wine creates its prefix under the kiosk user's home on first launch,
+        which persists in /var/lib/kiosk. Adds roughly 0.6 GiB to the closure —
+        most of Wine's dependencies are already present for the desktop.
+      '';
+    };
+
     user = mkOption {
       type = types.str;
       default = "kiosk";
@@ -167,6 +185,10 @@ in {
 
     # Controller udev rules (uaccess) without installing Steam.
     hardware.steam-hardware.enable = true;
+
+    # Available to the kiosk user's session so a Windows build's run.sh can
+    # call it; see myConfig.kiosk.enableWine.
+    environment.systemPackages = mkIf cfg.enableWine [pkgs.wine64];
 
     # Game builds are foreign binaries, not Nix packages. Godot exports dlopen
     # their display/audio stack at runtime instead of linking it, so it never

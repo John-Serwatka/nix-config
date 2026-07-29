@@ -272,6 +272,45 @@ hov-prep:
 kiosk-deploy-hov host: hov-prep
     just kiosk-deploy {{ hov_dir }} HordeOfViscount {{ host }}
 
+# Unpack the Windows installer into win-build/ and add its wine launcher.
+[group('kiosk')]
+hov-prep-win:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if ! command -v 7z >/dev/null; then
+      if [ -n "${JUST_BOOTSTRAPPED:-}" ]; then
+        echo "7z still missing inside nix shell — aborting" >&2; exit 1
+      fi
+      exec env JUST_BOOTSTRAPPED=1 nix shell nixpkgs#p7zip -c just hov-prep-win
+    fi
+    root="{{ hov_root }}"
+    out="$root/win-build"
+    exe=$(ls -1t "$root"/Windows/*.exe 2>/dev/null | head -1 || true)
+    if [ -z "$exe" ]; then
+      echo "no .exe in $root/Windows" >&2; exit 1
+    fi
+    name=$(basename "$exe")
+
+    if [ -f "$out/VERSION" ] && [ "$(cat "$out/VERSION")" = "$name" ]; then
+      echo "win-build/ is already $name — nothing to do"
+      exit 0
+    fi
+
+    echo "==> unpacking $name (NSIS archive, not run)"
+    rm -rf "$out"; mkdir -p "$out"
+    7z x -o"$out" "$exe" >/dev/null
+    # NSIS scratch directories, not part of the game.
+    rm -rf "$out/"'$PLUGINSDIR' "$out/"'$TEMP'
+    cp "$root"/compat-win/* "$out/"
+    chmod +x "$out/run.sh"
+    printf '%s\n' "$name" > "$out/VERSION"
+    echo "==> win-build/ is now $name"
+
+# Deploy the Windows build of HoV as a separate game dir, for use under wine.
+[group('kiosk')]
+kiosk-deploy-hov-win host: hov-prep-win
+    just kiosk-deploy {{ hov_root }}/win-build HordeOfViscountWin {{ host }}
+
 # Notes for `run-local`: this runs the build on THIS machine with the exact
 # library set the kiosks expose through nix-ld, so a crash that reproduces here
 # is the build's, and one that only happens on a kiosk is environmental.
@@ -288,32 +327,18 @@ kiosk-deploy-hov host: hov-prep
 
 # Run the Windows build of HoV under Wine, for comparison with run-local.
 [group('kiosk')]
-run-local-win:
+run-local-win: hov-prep-win
     #!/usr/bin/env bash
     set -euo pipefail
     # nixpkgs' wine64 package installs the binary as `wine`, not `wine64`.
     # The guard matters more than the name: without it, a tool that is still
     # missing inside the nix shell re-execs this recipe forever.
-    if ! command -v 7z >/dev/null || ! command -v wine >/dev/null; then
+    if ! command -v wine >/dev/null; then
       if [ -n "${JUST_BOOTSTRAPPED:-}" ]; then
-        echo "7z or wine still missing inside nix shell — aborting" >&2
+        echo "wine still missing inside nix shell — aborting" >&2
         exit 1
       fi
-      exec env JUST_BOOTSTRAPPED=1 \
-        nix shell nixpkgs#p7zip nixpkgs#wine64 -c just run-local-win
-    fi
-    root="{{ hov_root }}"
-    out="$root/win-build"
-    exe=$(ls -1t "$root"/Windows/*.exe 2>/dev/null | head -1 || true)
-    if [ -z "$exe" ]; then
-      echo "no .exe in $root/Windows" >&2; exit 1
-    fi
-    if [ ! -f "$out/hov.exe" ] || [ "$exe" -nt "$out/hov.exe" ]; then
-      echo "==> unpacking $(basename "$exe")"
-      rm -rf "$out"; mkdir -p "$out"
-      7z x -o"$out" "$exe" >/dev/null
-      # NSIS scratch directories, not part of the game.
-      rm -rf "$out/"'$PLUGINSDIR' "$out/"'$TEMP'
+      exec env JUST_BOOTSTRAPPED=1 nix shell nixpkgs#wine64 -c just run-local-win
     fi
     # Wine rather than Proton. umu-launcher insists on downloading the Steam
     # Linux Runtime container and repo.steampowered.com currently answers 403,
@@ -321,10 +346,13 @@ run-local-win:
     # the ControllerStrategy crash follows the Windows build — Wine answers the
     # same question: it exposes gamepads through XInput, not through every
     # evdev node the way the GameMaker Linux runner does.
-    export WINEPREFIX="$root/win-prefix"
+    #
+    # Deliberately a local prefix, not the one win-build/run.sh would use on a
+    # kiosk, so desktop testing cannot disturb kiosk state.
+    export WINEPREFIX="{{ hov_root }}/win-prefix"
     export WINEDEBUG="${WINEDEBUG:--all}"
     echo "==> prefix: $WINEPREFIX  (created on first run)"
-    cd "$out"
+    cd "{{ hov_root }}/win-build"
     exec wine ./hov.exe
 
 # Run a kiosk build locally with the kiosk library environment.

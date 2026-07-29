@@ -27,6 +27,12 @@
 
   myConfig.kiosk.enable = true;
 
+  # Fallback runtime for vendor builds whose Linux export is broken — Horde of
+  # Viscount's ships on a 2016-era GameMaker runner that crashes on controller
+  # enumeration, while its Windows build runs clean. Costs ~0.6 GiB and nothing
+  # uses it unless a deployed build's run.sh calls `wine`.
+  myConfig.kiosk.enableWine = true;
+
   # Deploy target for game builds; primary user can rsync without sudo. Lives
   # here (not in kiosk.nix's mkIf cfg.enable) so it still exists when booted
   # straight into the `work` specialisation, which force-disables the kiosk.
