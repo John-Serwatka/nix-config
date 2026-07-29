@@ -338,7 +338,7 @@ run-local-win: hov-prep-win
         echo "wine still missing inside nix shell — aborting" >&2
         exit 1
       fi
-      exec env JUST_BOOTSTRAPPED=1 nix shell nixpkgs#wine64 -c just run-local-win
+      exec env JUST_BOOTSTRAPPED=1 nix shell nixpkgs#wineWow64Packages.full -c just run-local-win
     fi
     # Wine rather than Proton. umu-launcher insists on downloading the Steam
     # Linux Runtime container and repo.steampowered.com currently answers 403,

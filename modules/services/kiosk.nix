@@ -186,15 +186,16 @@ in {
     # Controller udev rules (uaccess) without installing Steam.
     hardware.steam-hardware.enable = true;
 
-    # Available to the kiosk user's session so a Windows build's run.sh can
-    # call it; see myConfig.kiosk.enableWine.
-    environment.systemPackages = mkIf cfg.enableWine [pkgs.wine64];
+    # The `full` variant, not plain wine64: nixpkgs defaults sdlSupport,
+    # udevSupport and usbSupport to false, and without udev/SDL wine's winebus
+    # cannot enumerate gamepads at all — the game runs but has no controller.
+    # Verified by winebus.so linking libudev.so.1 in this build.
+    environment.systemPackages = mkIf cfg.enableWine [pkgs.wineWow64Packages.full];
 
-    # Wine's winebus reaches controllers through hidraw, which ships as
-    # root-only 0600 — so a Windows build sees no gamepad even though
-    # steam-hardware has already granted the session ACLs on /dev/input/*.
-    # uaccess hands the ACL to whoever holds the active seat, i.e. the kiosk
-    # user, and nothing else on an appliance wants raw HID access.
+    # Controllers that expose a hidraw node (rather than only evdev, as the
+    # xpad-driven Xbox pads do) need the session to hold its ACL; hidraw ships
+    # root-only 0600. Harmless where no hidraw node exists, and nothing else on
+    # an appliance wants raw HID access.
     services.udev.extraRules = mkIf cfg.enableWine ''
       KERNEL=="hidraw*", TAG+="uaccess"
     '';
