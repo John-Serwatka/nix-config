@@ -190,6 +190,15 @@ in {
     # call it; see myConfig.kiosk.enableWine.
     environment.systemPackages = mkIf cfg.enableWine [pkgs.wine64];
 
+    # Wine's winebus reaches controllers through hidraw, which ships as
+    # root-only 0600 — so a Windows build sees no gamepad even though
+    # steam-hardware has already granted the session ACLs on /dev/input/*.
+    # uaccess hands the ACL to whoever holds the active seat, i.e. the kiosk
+    # user, and nothing else on an appliance wants raw HID access.
+    services.udev.extraRules = mkIf cfg.enableWine ''
+      KERNEL=="hidraw*", TAG+="uaccess"
+    '';
+
     # Game builds are foreign binaries, not Nix packages. Godot exports dlopen
     # their display/audio stack at runtime instead of linking it, so it never
     # appears in DT_NEEDED (`ldd` on the export shows only glibc) and there is
