@@ -47,6 +47,7 @@ with lib; let
     export PATH=${makeBinPath [pkgs.coreutils]}:$PATH
 
     game=${escapeShellArg cfg.command}
+    delay=2
     while true; do
       if [[ ! -x "$game" ]]; then
         echo "game launcher missing or not executable: $game — retrying in 10s"
@@ -73,10 +74,25 @@ with lib; let
       fi
 
       echo "starting $name"
+      started=$SECONDS
       ${gamescopeBin} ${escapeShellArgs baseArgs} "''${extra[@]}" -- "$game"
       status=$?
-      echo "$name exited with status $status — relaunching in 2s"
-      sleep 2
+      ran=$((SECONDS - started))
+
+      # Back off when the game dies immediately, so a persistent failure — no
+      # monitor attached, a missing library — retries once a minute rather than
+      # every two seconds, which otherwise floods the journal and writes a core
+      # dump each time. A session that actually ran resets the delay, so an
+      # ordinary quit or a redeploy still comes back promptly.
+      if [ "$ran" -lt 10 ]; then
+        delay=$((delay * 2))
+        [ "$delay" -gt 60 ] && delay=60
+      else
+        delay=2
+      fi
+
+      echo "$name exited with status $status after ''${ran}s — relaunching in ''${delay}s"
+      sleep "$delay"
     done
   '';
 in {
@@ -185,6 +201,14 @@ in {
 
     # Controller udev rules (uaccess) without installing Steam.
     hardware.steam-hardware.enable = true;
+
+    # A kiosk with no monitor attached crash-loops: gamescope cannot find a DRM
+    # primary plane and segfaults, so the launcher relaunches it every couple of
+    # seconds. That is the right behaviour — plug a display in and it recovers
+    # unattended — but each crash writes a core dump, which is unbounded growth
+    # from something as ordinary as a loose cable at a venue. Cores are no use
+    # here anyway; `journalctl -t kiosk` is how this gets diagnosed.
+    systemd.coredump.settings.Coredump.MaxUse = "64M";
 
     # The `full` variant, not plain wine64: nixpkgs defaults sdlSupport,
     # udevSupport and usbSupport to false, and without udev/SDL wine's winebus
