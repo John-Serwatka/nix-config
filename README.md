@@ -62,6 +62,44 @@ gamescope, relaunching it whenever it exits.
 The boot menu also carries a `work` specialisation — Plasma 6 + SDDM with the
 kiosk force-disabled — for doing maintenance on the box itself.
 
+### Remote access (Tailscale + LAN)
+
+A kiosk keeps two independent ways in, and uses whichever it can get:
+
+- **Tailnet** — `services.tailscale.enable` in `hosts/kiosk-common.nix`. When the
+  box has internet it's reachable from anywhere as `optiplex` / `beelink` over
+  MagicDNS. `tailscale0` is a trusted interface, so SSH — and therefore
+  `just deploy` and `just kiosk-deploy`, which are both SSH — work over the
+  tailnet with no extra ports opened. This is how you reach a box at a venue.
+- **LAN** — port 22 is already open on the physical NIC (openssh defaults
+  `openFirewall = true`), so a box on an offline network with no tailnet is
+  still reachable from a machine on the same switch/AP.
+
+Neither depends on the other being up. First join is unattended: an auth key in
+SOPS (`tailscale_authkey`) is wired to `services.tailscale.authKeyFile`, so a
+fresh box joins on first boot. The key is read only while unauthenticated —
+once joined, `/var/lib/tailscale` persists and a later expiry/rotation never
+drops the node. Both `withrin@desktop` and `withrin@laptop` are authorized.
+
+> **⚠️ Pending — not yet live on the kiosks.** Both boxes are offline as of
+> 2026-07-30, so the config above is committed but unrolled. `secrets.yaml`
+> holds a **placeholder** auth key (`tskey-auth-REPLACE-WITH-REAL-REUSABLE-KEY`);
+> the boxes will boot and answer LAN SSH but will not auto-join the tailnet
+> until it's replaced. When they're back online, in order:
+>
+> 1. Mint a **reusable, pre-approved, non-ephemeral** key in the Tailscale admin
+>    console (Settings → Keys). Tag it (e.g. `tag:kiosk`) if you gate device
+>    approval by ACL.
+> 2. Replace the placeholder:
+>    `SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt nix run nixpkgs#sops -- secrets/secrets.yaml`
+> 3. **Deploy from the desktop first** — the kiosks currently authorize only
+>    `withrin@desktop`, so the bootstrap deploy that installs Tailscale + the
+>    laptop key has to come from there over the LAN:
+>    `just deploy optiplex && just deploy beelink`. After it lands, the laptop
+>    can deploy to them too.
+> 4. Confirm they joined: `tailscale status` should list both, and
+>    `ssh withrin@beelink` should work from off-LAN.
+
 ### Two independent deploys
 
 A kiosk ships in two halves, on separate schedules:

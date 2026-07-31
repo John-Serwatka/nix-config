@@ -54,7 +54,48 @@
   };
   users.users.withrin.openssh.authorizedKeys.keys = [
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINx1ujbVZk2s/RRjVfqLOyNS4HfV1vTNLLivpFIqP0YI withrin@desktop"
+    # Laptop (~/.ssh/id_ed25519) so it can SSH in and drive `just deploy` /
+    # `just kiosk-deploy` against the kiosks, over the tailnet or the LAN.
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIM1Dul40V/Z3WrED3DXnZY9TDhIWMu0HQz/7n/fsH/0u withrin@laptop"
   ];
+
+  # Two ways in, and a kiosk keeps whichever it can get:
+  #
+  #   * On the home tailnet — reachable from anywhere the box has internet, as
+  #     `beelink`/`optiplex` over MagicDNS. This is how you reach one that lives
+  #     at a venue.
+  #   * On the LAN — port 22 is already open on the physical interface (openssh
+  #     defaults openFirewall = true), so a box on an offline venue network with
+  #     no tailnet is still reachable from a laptop on the same switch/AP.
+  #
+  # Both are always live; neither depends on the other being up. tailscale0 is a
+  # trusted interface so SSH — and therefore `just deploy` and `just
+  # kiosk-deploy`, which are both SSH — work over the tailnet with no extra
+  # ports opened. The daemon opens its own UDP port for direct connections.
+  #
+  # Headless join: authKeyFile points at a reusable auth key in SOPS, so a
+  # freshly installed kiosk joins the tailnet on first boot with no console. The
+  # key is only consulted while the box is unauthenticated — once joined, state
+  # persists in /var/lib/tailscale and the key is never read again, so an expired
+  # or rotated key never knocks an already-joined box off the tailnet.
+  #
+  # Minting the real key (one-time; replaces the placeholder in secrets.yaml):
+  #   * Tailscale admin console → Settings → Keys → Generate auth key
+  #   * Reusable + Pre-approved, non-ephemeral (survives reboots). Tag it (e.g.
+  #     tag:kiosk) if you gate device approval by ACL.
+  #   * SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt \
+  #       nix run nixpkgs#sops -- secrets/secrets.yaml   # set tailscale_authkey
+  # Until then the box still boots and LAN SSH still works; only the auto-join is
+  # inert (the placeholder key just fails to authenticate).
+  services.tailscale.enable = true;
+  services.tailscale.authKeyFile = config.sops.secrets.tailscale_authkey.path;
+  networking.firewall.trustedInterfaces = ["tailscale0"];
+
+  # Consumed by tailscale above. Declared here rather than in the shared
+  # core/sops.nix so it is kiosk-scoped — desktop/laptop never decrypt a key
+  # they don't use. Present in secrets.yaml (placeholder until a real key is
+  # set), so sops-install-secrets finds it and activation doesn't fail.
+  sops.secrets.tailscale_authkey = {};
 
   # Remote *config* deploys (`just deploy <host>`): nixos-rebuild builds on the
   # desktop and nix-copy-closure pushes the result here. Those paths are built
