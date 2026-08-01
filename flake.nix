@@ -37,9 +37,13 @@
         modules = [./hosts/desktop/default.nix];
       };
 
+      # withrin stays first so it remains myConfig.primaryUser (Syncthing, the
+      # sops age keyFile path). booth-admin is the low-privilege kiosk-dashboard
+      # operator login; both use the default homeProfile = "home", so each has
+      # its own users/<name>/home.nix.
       laptop = mkHost {
         hostname = "laptop";
-        users = ["withrin"];
+        users = ["withrin" "booth-admin"];
         modules = [./hosts/laptop/default.nix];
       };
 

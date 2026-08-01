@@ -7,8 +7,60 @@
 {
   config,
   lib,
+  pkgs,
   ...
-}: {
+}: let
+  # The booth-admin dashboard's public key (generated one-time on the laptop:
+  # ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519_booth_control). Left null until
+  # then — that yields an EMPTY authorizedKeys list below (see lib.optional), so
+  # a kiosk deploy never looks configured while sshd silently ignores a bad key.
+  # To activate: set this to the .pub contents, e.g.
+  #   "ssh-ed25519 AAAA... booth-admin@laptop"
+  boothAdminPublicKey = null;
+
+  # Forced-command dispatcher for the booth dashboard's SSH key (see the
+  # booth-control account below). The laptop's booth-admin user reaches this by
+  # running `ssh booth-control@<kiosk> <verb>`; sshd ignores the requested
+  # command and runs this instead, exposing the verb via $SSH_ORIGINAL_COMMAND.
+  # Everything is path-pinned (this is a security boundary — never trust PATH),
+  # and the three privileged verbs go through the setuid wrapper
+  # /run/wrappers/bin/sudo (the ${pkgs.sudo} store copy is not setuid on NixOS),
+  # gated by the scoped NOPASSWD rule in security.sudo.extraRules below.
+  kioskRemote = pkgs.writeShellApplication {
+    name = "kiosk-remote";
+    text = ''
+      command="''${SSH_ORIGINAL_COMMAND:-}"
+      case "$command" in
+        status)
+          build="$(${pkgs.coreutils}/bin/readlink -f /opt/kiosk/current 2>/dev/null || true)"
+          greetd="$(${pkgs.systemd}/bin/systemctl is-active greetd 2>/dev/null || true)"
+          session="$(${pkgs.systemd}/bin/loginctl show-user kiosk --property=State --value 2>/dev/null || true)"
+          boot_id="$(${pkgs.coreutils}/bin/cat /proc/sys/kernel/random/boot_id 2>/dev/null || true)"
+          printf 'BUILD=%s\n'   "''${build:-unknown}"
+          printf 'GREETD=%s\n'  "''${greetd:-unknown}"
+          printf 'SESSION=%s\n' "''${session:-down}"
+          printf 'BOOT_ID=%s\n' "''${boot_id:-unknown}"
+          ;;
+        logs)
+          exec ${pkgs.systemd}/bin/journalctl -t kiosk -b -n 100 --no-pager
+          ;;
+        restart)
+          exec /run/wrappers/bin/sudo -n ${pkgs.systemd}/bin/loginctl terminate-user kiosk
+          ;;
+        reboot)
+          exec /run/wrappers/bin/sudo -n ${pkgs.systemd}/bin/systemctl reboot
+          ;;
+        poweroff)
+          exec /run/wrappers/bin/sudo -n ${pkgs.systemd}/bin/systemctl poweroff
+          ;;
+        *)
+          printf 'Command denied\n' >&2
+          exit 64
+          ;;
+      esac
+    '';
+  };
+in {
   imports = [
     # Core
     ../modules/core/nix.nix
@@ -107,6 +159,57 @@
   # This is effectively root on the box, but that account already has wheel and
   # is the only one with an authorized key, so it grants nothing new.
   nix.settings.trusted-users = [config.myConfig.primaryUser];
+
+  # ── Booth dashboard remote control ──────────────────────────────────────────
+  # A dedicated, unprivileged account for the laptop's booth-admin dashboard.
+  # Deliberately NOT withrin: withrin is wheel + a trusted Nix user here (see
+  # above), so authorizing the booth key on it would hand the booth a full
+  # privileged shell. Instead the key is pinned to the kiosk-remote dispatcher
+  # (restrict + command=), so it can only run the fixed status/logs/restart/
+  # reboot/poweroff verbs — no shell, PTY, or forwarding.
+  users.groups.booth-control = {};
+  users.users.booth-control = {
+    isSystemUser = true;
+    group = "booth-control";
+    home = "/var/lib/booth-control";
+    createHome = true; # forced command runs via the account's login shell
+    shell = pkgs.bashInteractive;
+    # Read-only journal access for the `logs` verb, without needing sudo.
+    extraGroups = ["systemd-journal"];
+    # restrict = no PTY/agent/X11/port forwarding, no user rc; command= forces
+    # the dispatcher regardless of what the client asks to run. Empty until
+    # boothAdminPublicKey (top of file) is set, so the account exists but grants
+    # no access rather than authorizing a malformed placeholder key.
+    openssh.authorizedKeys.keys =
+      lib.optional (boothAdminPublicKey != null)
+      ''restrict,command="${kioskRemote}/bin/kiosk-remote" ${boothAdminPublicKey}'';
+  };
+
+  # Passwordless sudo for booth-control, scoped to exactly the three commands the
+  # dispatcher execs (full store paths + args, so nothing else matches). runAs is
+  # pinned to root because the NixOS default target is ALL:ALL, and execWheelOnly
+  # is kept false since booth-control is intentionally not in wheel.
+  security.sudo.execWheelOnly = false;
+  security.sudo.extraRules = [
+    {
+      users = ["booth-control"];
+      runAs = "root:root";
+      commands = [
+        {
+          command = "${pkgs.systemd}/bin/loginctl terminate-user kiosk";
+          options = ["NOPASSWD"];
+        }
+        {
+          command = "${pkgs.systemd}/bin/systemctl reboot";
+          options = ["NOPASSWD"];
+        }
+        {
+          command = "${pkgs.systemd}/bin/systemctl poweroff";
+          options = ["NOPASSWD"];
+        }
+      ];
+    }
+  ];
 
   # WiFi/GPU firmware blobs (the Beelink has wireless; harmless on the OptiPlex).
   hardware.enableRedistributableFirmware = true;

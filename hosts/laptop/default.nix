@@ -37,6 +37,15 @@
   myConfig.networking.openTCPPorts = [25565];
   services.tailscale.enable = true;
 
+  # Login hash for the booth-admin operator account (users/booth-admin). Declared
+  # here rather than the shared core/sops.nix so it is laptop-scoped — the kiosks
+  # never need to decrypt (or have present in secrets.yaml) a secret only the
+  # laptop uses, mirroring how kiosk-common.nix scopes tailscale_authkey.
+  # neededForUsers decrypts it early enough for account creation.
+  sops.secrets.booth_admin_password = {
+    neededForUsers = true;
+  };
+
   # Custom driver list (overrides the graphics.nix default): displaylink for
   # USB docks on top of amdgpu.
   services.xserver.videoDrivers = ["amdgpu" "displaylink" "modesetting"];
