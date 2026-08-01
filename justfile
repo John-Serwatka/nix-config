@@ -14,6 +14,10 @@
 # works on any host defined in this flake, without editing the command.
 hostname := `hostname`
 
+# Repo slug for `pr`: origin is the SSH host alias `github-pocketlore`, which gh
+# cannot auto-resolve, so --repo is passed explicitly.
+repo := "John-Serwatka/nix-config"
+
 # Horde of Viscount working area. Sean ships a zip (misleadingly named
 # .appimage). Layout:
 #   app/     drop new archives here — newest by mtime wins
@@ -54,6 +58,91 @@ doctor:
     @git branch --show-current
     @git status --short
     @nix flake metadata --no-write-lock-file
+
+# ─── Git ──────────────────────────────────────────────────────────────────────
+# Git/GitHub convenience recipes, normalized across the PocketLore justfiles
+# (Veilkeeper, veilkeeper-landing, Night Glass). Simple trunk here: `pr` targets
+# main.
+
+# Show the repository's Conventional Commit convention.
+[group('git')]
+commit-help:
+    @echo "Commit format:"
+    @echo "  type(optional-scope): description"
+    @echo
+    @echo "Allowed types:"
+    @echo "  feat      New functionality (module, host, or service)"
+    @echo "  fix       Bug fixes"
+    @echo "  refactor  Internal restructuring without behavior changes"
+    @echo "  perf      Performance improvements"
+    @echo "  docs      Documentation"
+    @echo "  build     Flake inputs and dependency bumps"
+    @echo "  ci        Continuous integration and automation"
+    @echo "  chore     General maintenance"
+    @echo "  revert    Revert a previous commit"
+    @echo
+    @echo "Examples:"
+    @echo "  feat(kiosk): add beelink host"
+    @echo "  build: bump nixpkgs flake input"
+    @echo "  docs: document sops rekey flow"
+
+# Show the working-tree summary, then prompt for a message and commit everything.
+[group('git')]
+commit:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    git status -s
+    echo
+    git diff --stat
+    echo
+    read -rp "Commit message: " msg
+    [ -n "$msg" ] || { echo "Aborted: empty message"; exit 1; }
+    git add -A
+    git commit -m "$msg"
+
+# Pick a local branch from a numbered menu and switch to it.
+[group('git')]
+switch:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    PS3="Switch to which branch? "
+    select b in $(git branch --format='%(refname:short)'); do
+        [ -n "${b:-}" ] || { echo "Invalid selection"; exit 1; }
+        git switch "$b"
+        break
+    done
+
+# Create and switch to a new branch (prompts for the name).
+[group('git')]
+new:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    read -rp "New branch name: " name
+    [ -n "$name" ] || { echo "Aborted: empty name"; exit 1; }
+    git switch -c "$name"
+
+# Fast-forward the current branch from origin (no merge commits).
+[group('git')]
+pull:
+    git pull --ff-only origin $(git branch --show-current)
+
+# Push the current branch to origin.
+[group('git')]
+push:
+    git push origin $(git branch --show-current)
+
+# High-level view of what's changed.
+[group('git')]
+status:
+    git status -s
+    @echo
+    git diff --stat
+
+# Open a PR from the current branch into the given base (default: main).
+# --repo is set because origin is an SSH host alias gh cannot auto-resolve.
+[group('git')]
+pr base="main":
+    gh pr create --repo {{ repo }} --base {{ base }} --head $(git branch --show-current) --fill
 
 # ─── System ───────────────────────────────────────────────────────────────────
 
