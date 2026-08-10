@@ -22,6 +22,7 @@
     godot_4_6-mono
     # godot_4_7-mono   Eventual migration
     butler
+    steamcmd
 
     # Build tooling
     just

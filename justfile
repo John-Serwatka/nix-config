@@ -339,24 +339,26 @@ kiosk-deploy-hov-win host: hov-prep-win
 # rather than enumerating every evdev node, so it isolates whether the
 # ControllerStrategy crash is specific to the GameMaker Linux runner.
 #
-# Builds a Wine prefix under Kiosk/win-prefix on first run. Delete that
-# directory to start clean. This is a desktop diagnostic, not a kiosk path.
+# Builds a Wine prefix under ~/.local/share/wineprefixes/hov on first run.
+# Delete that directory to start clean, or set WINEPREFIX to point elsewhere.
+# This is a desktop diagnostic, not a kiosk path.
 
 # Run the Windows build of HoV under Wine, for comparison with run-local.
 [group('kiosk')]
 run-local-win: hov-prep-win
     #!/usr/bin/env bash
     set -euo pipefail
-    # nixpkgs' wine64 package installs the binary as `wine`, not `wine64`.
-    # The guard matters more than the name: without it, a tool that is still
-    # missing inside the nix shell re-execs this recipe forever.
-    if ! command -v wine >/dev/null; then
-      if [ -n "${JUST_BOOTSTRAPPED:-}" ]; then
-        echo "wine still missing inside nix shell — aborting" >&2
-        exit 1
-      fi
-      exec env JUST_BOOTSTRAPPED=1 nix shell nixpkgs#wineWow64Packages.full -c just run-local-win
-    fi
+    # Pin the kiosk's exact wine instead of trusting PATH — same reasoning as
+    # run-local's nix-ld library set, and the same package kiosk.nix installs.
+    # gaming.nix puts a 32-bit-only `wine` in the desktop profile, so a
+    # presence check (`command -v wine`) picks a wine that cannot load this
+    # 64-bit exe at all and dies with "Bad EXE format". The `full` variant is
+    # also the only one built with SDL/udev, so gamepads behave here the way
+    # they do on a kiosk — which is the entire point of this recipe.
+    wine=$(nix build --no-link --print-out-paths \
+      .#nixosConfigurations.optiplex.pkgs.wineWow64Packages.full)
+    export PATH="$wine/bin:$PATH"
+    echo "==> wine: $wine"
     # Wine rather than Proton. umu-launcher insists on downloading the Steam
     # Linux Runtime container and repo.steampowered.com currently answers 403,
     # so Proton cannot start at all. For *this* purpose — finding out whether
@@ -365,9 +367,15 @@ run-local-win: hov-prep-win
     # evdev node the way the GameMaker Linux runner does.
     #
     # Deliberately a local prefix, not the one win-build/run.sh would use on a
-    # kiosk, so desktop testing cannot disturb kiosk state.
-    export WINEPREFIX="{{ hov_root }}/win-prefix"
+    # kiosk, so desktop testing cannot disturb kiosk state. It lives outside
+    # hov_root because that tree is a Seafile library, and a Wine prefix is tens
+    # of thousands of small files and symlinks that have no business syncing.
+    # Overridable so a throwaway prefix can be used without editing this recipe.
+    export WINEPREFIX="${WINEPREFIX:-$HOME/.local/share/wineprefixes/hov}"
     export WINEDEBUG="${WINEDEBUG:--all}"
+    # Same reason as win-build/run.sh: a fresh prefix makes Wine offer to
+    # download wine-mono/wine-gecko, and GameMaker needs neither.
+    export WINEDLLOVERRIDES="${WINEDLLOVERRIDES:-mscoree,mshtml=d}"
     echo "==> prefix: $WINEPREFIX  (created on first run)"
     cd "{{ hov_root }}/win-build"
     exec wine ./hov.exe
