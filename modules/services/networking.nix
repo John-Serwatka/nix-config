@@ -14,7 +14,7 @@ with lib; {
   options.myConfig.networking.openTCPPorts = mkOption {
     type = types.listOf types.port;
     default = [];
-    example = [ 22 80 443 25565 ];
+    example = [22 80 443 25565];
     description = "A list of TCP ports to allow through the firewall.";
   };
 
@@ -24,8 +24,8 @@ with lib; {
 
       # Allow NetworkManager's DHCP and DNS services for Ethernet sharing.
       networking.firewall.interfaces."enp45s0f3u2u2c2" = {
-        allowedUDPPorts = [ 53 67 ];
-        allowedTCPPorts = [ 53 ];
+        allowedUDPPorts = [53 67];
+        allowedTCPPorts = [53];
       };
     })
 
