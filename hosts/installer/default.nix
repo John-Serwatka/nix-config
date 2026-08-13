@@ -22,6 +22,7 @@
 # The flake source is still mounted at /etc/nix-config for reference and for
 # post-install work, but the install path deliberately does not evaluate it.
 {
+  config,
   disko,
   lib,
   modulesPath,
@@ -125,4 +126,13 @@ in {
   # mkForce because iso-image.nix sets baseName at normal priority.
   image.baseName = lib.mkForce "nixos-installer-withrin";
   isoImage.appendToMenuLabel = " (withrin nix-config)";
+
+  # The filesystem label written into the image, which is what `lsblk`, udev and
+  # /dev/disk/by-label show once the stick is written. baseName above only names
+  # the output *file* in result/iso — it does not touch this, so without an
+  # override a written stick is indistinguishable from a stock NixOS one
+  # (installation-cd-base.nix labels both "nixos-minimal-<release>-<arch>").
+  # That matters at a venue: picking the wrong stick out of a drawer means no
+  # offline install. Kept under the 32-character ISO9660 limit.
+  isoImage.volumeID = "withrin-kiosk-${config.system.nixos.release}-x86_64";
 }
