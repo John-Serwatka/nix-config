@@ -43,18 +43,33 @@ covers it. Revisit after the show.
 
 ---
 
-### Task 1: Capture optiplex2's hardware facts
+### Task 1: Confirm optiplex2's disk device and network
 
 > 🔌 **USER ONLY.** Needs the physical box and the installer USB.
 
-Nothing can be written blind here. `modules/disk/kiosk.nix:26-34` deliberately
-gives `diskDevice` no default so an unset value fails evaluation rather than
-partitioning whatever happens to be `/dev/sda`.
+**No `nixos-generate-config` run, and no generated `hardware.nix` for this
+host.** That is the whole point of disko, and an earlier draft of this plan got
+it wrong. Verified against the pinned nixpkgs:
+
+- A bare NixOS config already has `ahci`, `nvme`, `sd_mod`, `usbhid`, and
+  `xhci_pci` in its initrd via `boot.initrd.includeDefaultModules` (default
+  `true`). Of the five modules `optiplex`'s generated file lists, only
+  `usb_storage` is not a default — and it appears there only because the scan
+  saw an installer USB attached.
+- disko mounts by partlabel (`/dev/disk/by-partlabel/disk-main-root`), not by
+  device path, so nothing about booting depends on the disk device.
+- The only remaining bits — `kvm-intel` and the Intel microcode line — are
+  per-vendor, not per-machine, and live in `hosts/optiplex-common.nix` (Task 3).
+
+So the only fact this task collects is the disk device, and even that is
+overridable at install time with `disko-install --disk main <dev>`.
+`modules/disk/kiosk.nix:26-34` still gives it no default, so it must be set to
+*something* correct for later `nixos-rebuild` runs.
 
 **Files:** none — this task produces facts consumed by Task 3.
 
 **Interfaces:**
-- Produces: the disk device path, the `boot.initrd.availableKernelModules` list, and whether the box is the same Dell model as `optiplex`.
+- Produces: the whole-disk device path for optiplex2, and confirmation that the box has network.
 
 - [ ] **Step 1: Boot the installer USB on optiplex2**
 
@@ -68,20 +83,10 @@ lsblk -o NAME,SIZE,TYPE,TRAN,MODEL
 ```
 
 Write down the whole-disk device for the internal drive — `/dev/sda` for a SATA
-SSD, `/dev/nvme0n1` for NVMe. **Not** a partition.
+SSD, `/dev/nvme0n1` for NVMe. **Not** a partition, and not the USB stick you
+just booted from.
 
-- [ ] **Step 3: Record the hardware config**
-
-```bash
-nixos-generate-config --show-hardware-config --no-filesystems
-```
-
-`--no-filesystems` matters: disko owns the filesystems, so the generated
-`fileSystems` block must not end up in the repo. Copy the
-`boot.initrd.availableKernelModules`, `boot.kernelModules`, and the
-`hardware.cpu.*.updateMicrocode` line.
-
-- [ ] **Step 4: Confirm network and record the IP**
+- [ ] **Step 3: Confirm network**
 
 ```bash
 ip -brief addr; ping -c2 cache.nixos.org
@@ -89,11 +94,11 @@ ip -brief addr; ping -c2 cache.nixos.org
 
 `disko-install` re-evaluates the flake and needs network. If this fails, stop —
 Task 4 cannot proceed and the multi-host ISO work comes back onto the critical
-path.
+path. See the fallback table.
 
-- [ ] **Step 5: Hand the facts back**
+- [ ] **Step 4: Hand the facts back**
 
-Paste the outputs of Steps 2-4. Task 3 cannot start without them.
+Paste the outputs of Steps 2-3. Task 3 needs the device path.
 
 ---
 
@@ -205,13 +210,17 @@ installed today is `26.11`.
 **Files:**
 - Create: `hosts/optiplex-common.nix`
 - Create: `hosts/optiplex2/default.nix`
-- Create: `hosts/optiplex2/hardware.nix`
 - Modify: `hosts/optiplex/default.nix`
 - Modify: `flake.nix` (after the `optiplex` entry, currently ending line 62)
 
+**Note: there is deliberately no `hosts/optiplex2/hardware.nix`.** See Task 1 —
+everything such a file would contain is either a NixOS default or per-vendor,
+and the per-vendor bits go in `optiplex-common.nix` below. A disko host that
+still needs a generated hardware file has not really been freed from one.
+
 **Interfaces:**
-- Consumes: Task 1's disk device and kernel module list.
-- Produces: `nixosConfigurations.optiplex2`, and `hosts/optiplex-common.nix` holding the shared Intel/thermald/120 Hz base.
+- Consumes: Task 1's disk device path.
+- Produces: `nixosConfigurations.optiplex2`, and `hosts/optiplex-common.nix` holding the shared Intel/thermald/120 Hz/platform base.
 
 - [ ] **Step 1: Write the failing assertion**
 
@@ -238,13 +247,34 @@ Expected: `error: attribute 'optiplex2' missing`.
 # declares fileSystems in its generated hardware.nix, and disko declares them
 # too — importing it here would be an evaluation conflict until that host is
 # migrated. Move the import up once both hosts are disko-managed.
-{...}: {
+{
+  config,
+  lib,
+  ...
+}: {
   imports = [
     ./kiosk-common.nix
     ../modules/hardware/graphics.nix
     # Intel thermal throttling daemon — these boxes run a game around the clock.
     ../modules/services/thermald.nix
   ];
+
+  # ── Platform ────────────────────────────────────────────────────────────────
+  # This is everything a generated hardware.nix would have carried, minus the
+  # filesystems disko owns. It is per-vendor, not per-machine, which is why a
+  # disko-managed OptiPlex needs no generated file of its own.
+  #
+  # Not listed: ahci, nvme, sd_mod, usbhid, xhci_pci. All five are already in
+  # boot.initrd.includeDefaultModules (default true) — verified by evaluating a
+  # bare NixOS config against this flake's nixpkgs. usb_storage is the one
+  # exception, kept as cheap insurance so a box whose boot device shows up
+  # behind USB mass storage still finds its root rather than dropping to an
+  # initrd prompt at a venue.
+  boot.initrd.availableKernelModules = ["usb_storage"];
+
+  # Intel microcode. enableRedistributableFirmware is already true from
+  # kiosk-common.nix, but this option does not follow it automatically.
+  hardware.cpu.intel.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
 
   # High-refresh panels commonly advertise 60 Hz as their EDID-preferred mode,
   # and gamescope takes it — which smears on VA. 120 Hz needs a 297 MHz pixel
@@ -287,55 +317,23 @@ Replace the body of `hosts/optiplex/default.nix` with:
 }
 ```
 
-- [ ] **Step 5: Create optiplex2's hardware.nix**
+- [ ] **Step 5: Create optiplex2's default.nix**
 
-Paste the values from Task 1 Step 3. If the box is the same model as `optiplex`,
-they will match `hosts/optiplex/hardware.nix:17-20` — but **use what the box
-reported**, not what the other box has.
-
-`hosts/optiplex2/hardware.nix`:
-
-```nix
-# hosts/optiplex2/hardware.nix — from `nixos-generate-config --no-filesystems`
-#
-# No fileSystems or swapDevices block: disko owns partitioning and filesystems
-# for this host (../../modules/disk/kiosk.nix), which is the point — it can be
-# reinstalled onto replacement hardware without hand-editing a generated file.
-{
-  config,
-  lib,
-  modulesPath,
-  ...
-}: {
-  imports = [
-    (modulesPath + "/installer/scan/not-detected.nix")
-  ];
-
-  boot.initrd.availableKernelModules = ["xhci_pci" "ahci" "usbhid" "usb_storage" "sd_mod"];
-  boot.initrd.kernelModules = [];
-  boot.kernelModules = ["kvm-intel"];
-  boot.extraModulePackages = [];
-
-  nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
-  hardware.cpu.intel.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
-}
-```
-
-- [ ] **Step 6: Create optiplex2's default.nix**
-
-Replace `/dev/sda` with the device from Task 1 Step 2.
+Replace `/dev/sda` with the device from Task 1 Step 2. This is the **only** file
+this host needs — there is no `hardware.nix`.
 
 `hosts/optiplex2/default.nix`:
 
 ```nix
 # hosts/optiplex2/default.nix — second Dell OptiPlex game kiosk
 #
-# Unlike ../optiplex, this box was provisioned with disko from the start, so it
-# imports the declarative disk layout directly and its hardware.nix carries no
-# fileSystems block.
+# Unlike ../optiplex, this box was provisioned with disko from the start. It has
+# no hardware.nix at all: disko owns the filesystems, the initrd modules it
+# would have listed are NixOS defaults, and the per-vendor bits (Intel
+# microcode, usb_storage) live in ../optiplex-common.nix. Nothing here is
+# specific to this physical machine except which disk to partition.
 {...}: {
   imports = [
-    ./hardware.nix
     ../optiplex-common.nix
     ../../modules/disk/kiosk.nix
   ];
@@ -374,17 +372,32 @@ nix eval .#nixosConfigurations.optiplex2.config.myConfig.kiosk.refreshHz
 
 Expected: `"optiplex2"`, your device path, `120`.
 
-Confirm the refactor did not change `optiplex`. Compare its system derivation
-against the one recorded before this task — it should be **identical**, since
-`optiplex-common.nix` only relocates settings:
+Now confirm the refactor did not change `optiplex` in any way that matters.
+Its toplevel derivation **may legitimately shift**: `optiplex-common.nix` adds
+`usb_storage` to `boot.initrd.availableKernelModules`, and that host's generated
+`hardware.nix:17` already lists it, so the merged list gains a duplicate entry.
+Harmless, but enough to move the hash. So compare the options rather than the
+derivation:
 
 ```bash
-nix eval --raw .#nixosConfigurations.optiplex.config.system.build.toplevel
+for opt in \
+  myConfig.kiosk.refreshHz \
+  myConfig.graphics.vendor \
+  networking.hostName \
+  system.stateVersion \
+  services.thermald.enable; do
+  printf '%-34s ' "$opt"
+  nix eval ".#nixosConfigurations.optiplex.config.$opt"
+done
+nix eval --json .#nixosConfigurations.optiplex.config.boot.initrd.availableKernelModules \
+  --apply 'l: { count = builtins.length l; hasUsbStorage = builtins.elem "usb_storage" l; }'
 ```
 
-Expected: `/nix/store/2kx2a7f10w5migy4d9frr9jk7khf0h1q-nixos-system-optiplex-26.11.20260711.e7a3ca8`
+Expected: `120`, `"intel"`, `"optiplex"`, `"26.05"`, `true`, and
+`hasUsbStorage = true`.
 
-If it differs, the refactor changed behavior — find out why before continuing.
+If `refreshHz`, `vendor`, or `thermald` changed, the refactor dropped a setting
+— stop and find out why before continuing.
 
 - [ ] **Step 9: Confirm the disko script now exists**
 
@@ -828,8 +841,8 @@ adoption dance on a box that used to work.
 
 **Files:**
 - Modify: `hosts/optiplex-common.nix` (add the disko import)
-- Modify: `hosts/optiplex/default.nix` (add `myConfig.diskDevice`)
-- Modify: `hosts/optiplex/hardware.nix` (delete `fileSystems` and `swapDevices`)
+- Modify: `hosts/optiplex/default.nix` (add `myConfig.diskDevice`, drop the `./hardware.nix` import)
+- Delete: `hosts/optiplex/hardware.nix`
 
 **Interfaces:**
 - Consumes: a proven procedure from Task 4.
@@ -876,17 +889,40 @@ In `hosts/optiplex/default.nix`, add above `networking.hostName`, using the
 device from Step 1:
 
 ```nix
-  # disko owns this host's partitioning and filesystems, so hardware.nix carries
-  # no fileSystems block. Confirmed with `lsblk` on the box.
+  # disko owns this host's partitioning and filesystems (see
+  # ../optiplex-common.nix), which is why this host has no hardware.nix.
+  # Confirmed with `lsblk` on the box; only affects partitioning, since disko
+  # mounts by /dev/disk/by-partlabel/.
   myConfig.diskDevice = "/dev/sda";
 ```
 
-- [ ] **Step 5: Strip the generated filesystems**
+- [ ] **Step 5: Delete the generated hardware file**
 
-In `hosts/optiplex/hardware.nix`, delete the `fileSystems."/"`,
-`fileSystems."/boot"`, and `swapDevices` blocks (currently lines 21-35). Keep
-the imports, the kernel module lines, `nixpkgs.hostPlatform`, and the microcode
-line.
+```bash
+git rm hosts/optiplex/hardware.nix
+```
+
+and remove `./hardware.nix` from the `imports` list in
+`hosts/optiplex/default.nix`.
+
+The whole file goes, not just the filesystems — this is the point of the
+migration. Accounting for every line it contained:
+
+| Line | Where it goes |
+|---|---|
+| `fileSystems."/"`, `"/boot"`, `swapDevices` | disko owns them |
+| `xhci_pci`, `ahci`, `usbhid`, `sd_mod` | already NixOS defaults |
+| `usb_storage` | `optiplex-common.nix` |
+| `hardware.cpu.intel.updateMicrocode` | `optiplex-common.nix` |
+| `nixpkgs.hostPlatform` | set by `lib/mkHost.nix` |
+| `not-detected.nix` import | only sets `enableRedistributableFirmware`, already `true` at `hosts/kiosk-common.nix:215` |
+| `boot.kernelModules = ["kvm-intel"]` | **dropped** — KVM is for running VMs; a kiosk does not |
+
+After this, both OptiPlexes are described entirely by files you wrote, and
+neither has a generated artifact tied to one physical machine.
+
+After this, both OptiPlexes are described entirely by files you wrote, and
+neither has a generated artifact tied to one physical machine.
 
 - [ ] **Step 6: Verify before touching hardware**
 
@@ -903,8 +939,11 @@ swap as a partition, not a `swapDevices` entry).
 - [ ] **Step 7: Commit before the destructive step**
 
 ```bash
-git add hosts/optiplex-common.nix hosts/optiplex/default.nix hosts/optiplex/hardware.nix hosts/optiplex2/default.nix
-git commit -m "feat(optiplex): manage partitioning with disko"
+git add -A hosts/optiplex-common.nix hosts/optiplex hosts/optiplex2/default.nix
+git status --short   # expect: D hosts/optiplex/hardware.nix
+git commit -m "feat(optiplex): manage partitioning with disko
+
+Drops the generated hardware.nix; nothing in it was machine-specific."
 ```
 
 - [ ] **Step 8: USER — wipe and reinstall**
