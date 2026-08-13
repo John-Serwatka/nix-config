@@ -30,9 +30,14 @@ default:
 # ─── Core ─────────────────────────────────────────────────────────────────────
 
 # Format every Nix file with the flake's formatter (alejandra).
+#
+# The `.` is required. Older Nix passed the current directory to the formatter
+# implicitly; 2.34 passes nothing, so a bare `nix fmt` hands alejandra no paths
+# and it reads stdin instead — failing with "unexpected end of file" having
+# formatted nothing. That silently broke `ci` and `verify`, which depend on it.
 [group('core')]
 fmt:
-    nix fmt
+    nix fmt .
 
 # Evaluate the flake and every host configuration.
 [group('core')]
