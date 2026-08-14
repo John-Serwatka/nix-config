@@ -58,6 +58,15 @@
         modules = [./hosts/optiplex/default.nix];
       };
 
+      # Second OptiPlex (3070). Shares hosts/optiplex-common.nix with the first
+      # but was provisioned with disko from the start, so it has no hardware.nix.
+      optiplex2 = mkHost {
+        hostname = "optiplex2";
+        users = ["withrin"];
+        homeProfile = "home-kiosk";
+        modules = [./hosts/optiplex2/default.nix];
+      };
+
       beelink = mkHost {
         hostname = "beelink";
         users = ["withrin"];
