@@ -921,9 +921,6 @@ migration. Accounting for every line it contained:
 After this, both OptiPlexes are described entirely by files you wrote, and
 neither has a generated artifact tied to one physical machine.
 
-After this, both OptiPlexes are described entirely by files you wrote, and
-neither has a generated artifact tied to one physical machine.
-
 - [ ] **Step 6: Verify before touching hardware**
 
 ```bash
@@ -954,6 +951,42 @@ then:
 ```bash
 disko-install --flake /tmp/nix-config#optiplex --disk main /dev/sda
 ```
+
+> 🪤 **The ESP trap — this bit optiplex2 for real, and here it is far more
+> expensive.** disko **skips `mkfs` when it finds a filesystem whose type
+> already matches** the declared format; that is what makes re-running it
+> idempotent. `optiplex` already has a vfat ESP as partition 1. Wiping the
+> partition *table* does not erase the filesystem inside it, so disko creates a
+> 1 G ESP partition, finds the old (much smaller) vfat still sitting at that
+> offset, skips formatting, and the install dies at the bootloader step with
+> `OSError: [Errno 28] No space left on device`.
+>
+> On optiplex2 this cost a re-run. Here it happens mid-migration on your
+> working kiosk.
+>
+> **Verify the ESP is the size you asked for before installing.** After disko
+> partitions but before you trust the result:
+>
+> ```bash
+> lsblk -o NAME,SIZE,FSTYPE,PARTLABEL /dev/sda   # partition should be 1G
+> mkdir -p /mnt/esp && mount /dev/sda1 /mnt/esp
+> df -h /mnt/esp                                  # FILESYSTEM must also be ~1G
+> umount /mnt/esp
+> ```
+>
+> If the filesystem is smaller than the partition, or `ls /mnt/esp` shows a
+> `System Volume Information` directory, it is the old one. Fix and re-run in
+> mount mode so the root copy is not repeated:
+>
+> ```bash
+> wipefs -a /dev/sda1
+> mkfs.vfat -F 32 /dev/sda1
+> disko-install --mode mount --write-efi-boot-entries \
+>   --flake /tmp/nix-config#optiplex --disk main /dev/sda
+> ```
+>
+> Belt and braces: `wipefs -a /dev/sda1` *before* the first `disko-install` and
+> the trap never fires at all.
 
 - [ ] **Step 9: Restore the host key before first boot completes**
 
