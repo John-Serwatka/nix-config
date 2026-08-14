@@ -111,6 +111,18 @@ in {
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIM1Dul40V/Z3WrED3DXnZY9TDhIWMu0HQz/7n/fsH/0u withrin@laptop"
   ];
 
+  # Bootstrap path for a freshly imaged box. Until its new SSH host key is added
+  # to .sops.yaml, sops cannot decrypt withrin_password — so withrin has no
+  # password and cannot sudo, which is exactly what `just deploy` needs. Deploying
+  # as root sidesteps that; use `just deploy-root <host>` until the box is adopted.
+  # Grants nothing new: withrin is already wheel and a trusted Nix user here (see
+  # nix.settings.trusted-users below). PermitRootLogin defaults to
+  # prohibit-password, so this stays key-only.
+  users.users.root.openssh.authorizedKeys.keys = [
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINx1ujbVZk2s/RRjVfqLOyNS4HfV1vTNLLivpFIqP0YI withrin@desktop"
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIM1Dul40V/Z3WrED3DXnZY9TDhIWMu0HQz/7n/fsH/0u withrin@laptop"
+  ];
+
   # Two ways in, and a kiosk keeps whichever it can get:
   #
   #   * On the home tailnet — reachable from anywhere the box has internet, as

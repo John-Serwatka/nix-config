@@ -184,6 +184,20 @@ deploy-boot host:
 deploy-build host:
     nixos-rebuild build --flake .#{{ host }}
 
+# For a freshly imaged box whose SSH host key is not yet an age recipient in
+# .sops.yaml: it cannot decrypt withrin_password, so withrin has no password to
+# sudo with and plain `deploy` fails. Switch back to `deploy` once adopted.
+#
+# `target` defaults to `host` but can be given separately, because a box that has
+# not joined the tailnet yet has no MagicDNS name — pass its IP:
+#   just deploy-root optiplex2 10.42.0.190
+
+# Deploy <host> as root over SSH (no sudo), optionally to a given address.
+[group('deploy')]
+deploy-root host target=":":
+    nixos-rebuild switch --flake .#{{ host }} \
+        --target-host root@{{ if target == ":" { host } else { target } }}
+
 # ─── Kiosk game deploys ───────────────────────────────────────────────────────
 # Game builds ship independently of NixOS (see modules/services/kiosk.nix):
 # rsync an export into its own directory under /opt/kiosk on the kiosk host,
