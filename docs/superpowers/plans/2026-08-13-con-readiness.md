@@ -532,6 +532,32 @@ SSH succeeding. If `tailscale status` shows it unauthenticated, the
 `tailscale_authkey` in sops is still the placeholder — mint a real one per
 `hosts/kiosk-common.nix:134-141`.
 
+> 🪤 **withrin's password will still be locked here, and a reboot does not fix
+> it.** Observed on optiplex2. The account is *created* during the very first
+> activation, when the host key is not yet an age recipient and the secret
+> cannot be decrypted — so it is created with `!`. Because
+> `users.mutableUsers` is `true`, later activations will not overwrite an
+> existing local password, so adopting the key and redeploying leaves the
+> account locked forever.
+>
+> The config is correct and identical to a working host — this is purely
+> first-boot state. Apply the now-decryptable hash once:
+>
+> ```bash
+> ssh root@<host> 'usermod -p "$(cat /run/secrets-for-users/withrin_password)" withrin'
+> ```
+>
+> Verify it took, comparing against the secret rather than just eyeballing it:
+>
+> ```bash
+> ssh root@<host> '[ "$(grep ^withrin: /etc/shadow | cut -d: -f2)" \
+>   = "$(cat /run/secrets-for-users/withrin_password)" ] && echo MATCH || echo MISMATCH'
+> ```
+>
+> Until this is done `just deploy` fails (no password to sudo with) and only
+> `just deploy-root` works. Task 8 avoids this entirely by restoring the old
+> host key, so the secret decrypts on the very first boot.
+
 - [ ] **Step 10: Commit**
 
 ```bash
