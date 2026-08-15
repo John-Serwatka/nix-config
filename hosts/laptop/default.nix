@@ -17,6 +17,7 @@
 
     # Services
     ../../modules/services/audio.nix
+    ../../modules/services/avahi.nix
     ../../modules/services/desktop.nix
     ../../modules/services/flatpak.nix
     ../../modules/services/syncthing.nix

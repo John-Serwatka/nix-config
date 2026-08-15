@@ -17,6 +17,7 @@
 
     # Services
     ../../modules/services/audio.nix
+    ../../modules/services/avahi.nix
     ../../modules/services/desktop.nix
     ../../modules/services/flatpak.nix
     ../../modules/services/ollama.nix
@@ -86,6 +87,12 @@
   # optiplex2 and beelink are absent because they have not joined yet — they
   # still need the deploy carrying the real auth key. Add them once
   # `tailscale status` shows them.
+  #
+  # REMOTE ONLY. These are tailnet addresses, so they need internet — at a venue
+  # with none, the tailnet is unavailable and `ssh optiplex` resolves to an
+  # unroutable 100.x address and *hangs* rather than failing. On site use the
+  # mDNS names instead, which need nothing but the local switch:
+  #   ssh optiplex.local
   networking.hosts = {
     "100.91.165.90" = ["optiplex"];
   };

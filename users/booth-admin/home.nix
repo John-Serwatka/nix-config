@@ -40,9 +40,18 @@
         ServerAliveCountMax = 1;
       };
     in {
-      optiplex = common // {HostName = "optiplex";};
-      optiplex2 = common // {HostName = "optiplex2";};
-      beelink = common // {HostName = "beelink";};
+      # .local, not the bare name or the tailnet address. This dashboard is an
+      # on-site tool and a venue may have no internet, which takes the tailnet
+      # with it — MagicDNS would resolve to a 100.x address nothing can route
+      # to, and BatchMode means the failure is silent: every kiosk simply reads
+      # "offline". mDNS (modules/services/avahi.nix) needs only the local
+      # switch, so these names resolve on whatever network the booth is handed.
+      #
+      # The Host aliases stay short so booth-dashboard.nix's HOSTS array and the
+      # `ssh <host> <verb>` calls in it need no change.
+      optiplex = common // {HostName = "optiplex.local";};
+      optiplex2 = common // {HostName = "optiplex2.local";};
+      beelink = common // {HostName = "beelink.local";};
     };
   };
 }

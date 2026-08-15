@@ -73,6 +73,7 @@ in {
 
     # Services
     ../modules/services/audio.nix
+    ../modules/services/avahi.nix
     ../modules/services/kiosk.nix
     ../modules/services/networking.nix
   ];
