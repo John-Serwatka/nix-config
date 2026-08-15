@@ -41,6 +41,7 @@
       };
     in {
       optiplex = common // {HostName = "optiplex";};
+      optiplex2 = common // {HostName = "optiplex2";};
       beelink = common // {HostName = "beelink";};
     };
   };

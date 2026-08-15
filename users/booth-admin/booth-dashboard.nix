@@ -14,7 +14,9 @@
       # whitelist — never eval/source it — so a misbehaving or compromised kiosk
       # can never run code locally as booth-admin.
 
-      HOSTS=(optiplex beelink)
+      # Every kiosk must be listed here AND have a matching Host block in
+      # ../home.nix, or it silently never appears on the dashboard.
+      HOSTS=(optiplex optiplex2 beelink)
       SELECTED="''${HOSTS[0]}"
       REFRESH=5 # seconds between idle auto-refreshes
 
