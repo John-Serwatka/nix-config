@@ -16,7 +16,6 @@ keys:
   # install time — reinstalling the box invalidates this line and it has to be
   # re-derived and `sops updatekeys` re-run.
   - &optiplex2_host age1ak94kje3aersc36afk3qg0celjx6nupeyav6z5kaj7cwrl024snqq66h74
-
   # Superseded manual kiosk keys. Kept until both boxes are confirmed decrypting
   # via their host keys, then drop these and re-run `sops updatekeys`.
   - &optiplex age1rgkxvkw5elmudgs0ecuvurq9cugttltxlnhlcx86qdw7pghwsyxsdt8u7a
