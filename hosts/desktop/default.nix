@@ -59,5 +59,16 @@
   myConfig.networking.enableManager = true;
   myConfig.networking.openTCPPorts = [25565];
 
+  # Tailscale, so this machine can reach the kiosks by MagicDNS name instead of
+  # whatever address DHCP handed them. `just deploy <host>` and `just
+  # kiosk-deploy <dir> <game> <host>` both use the host argument as an SSH name,
+  # so without this they only work against raw IPs — which move.
+  #
+  # No authKeyFile here, unlike hosts/kiosk-common.nix: this is an interactive
+  # workstation, not a headless appliance that has to join unattended. Join it
+  # once by hand, the same way the laptop was:
+  #   sudo tailscale up
+  services.tailscale.enable = true;
+
   system.stateVersion = "25.05";
 }
