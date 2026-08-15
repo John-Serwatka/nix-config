@@ -67,8 +67,28 @@
   # No authKeyFile here, unlike hosts/kiosk-common.nix: this is an interactive
   # workstation, not a headless appliance that has to join unattended. Join it
   # once by hand, the same way the laptop was:
-  #   sudo tailscale up
+  #   sudo tailscale up --accept-dns=false
+  #
+  # --accept-dns=false deliberately: this machine sits on the same LAN as
+  # pi-server, and letting tailscale take over resolution would route DNS away
+  # from it. The cost is no MagicDNS, which networking.hosts below replaces.
   services.tailscale.enable = true;
+
+  # Kiosks by name without MagicDNS. Tailscale addresses are stable for the life
+  # of a node — unlike the DHCP leases these boxes get, which move between
+  # sessions — so pinning them here is what makes `just deploy optiplex` and
+  # `just kiosk-deploy <dir> <game> optiplex` work at all. Covers rsync, ping and
+  # anything else too, which an ssh config alone would not.
+  #
+  # Re-derive an entry if a box is ever removed from and re-added to the tailnet;
+  # it gets a new address. Check with `tailscale status`.
+  #
+  # optiplex2 and beelink are absent because they have not joined yet — they
+  # still need the deploy carrying the real auth key. Add them once
+  # `tailscale status` shows them.
+  networking.hosts = {
+    "100.91.165.90" = ["optiplex"];
+  };
 
   system.stateVersion = "25.05";
 }
