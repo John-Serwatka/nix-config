@@ -252,28 +252,30 @@ in {
     };
   };
 
-  # Near-invisible boot menu at a booth: at 1s the default kiosk entry starts
-  # essentially immediately, so a passer-by never gets a menu to poke at, while
-  # the `work` specialisation below stays reliably reachable.
+  # No boot menu at a booth: the default kiosk entry starts immediately, so a
+  # passer-by never sees a menu to poke at.
   #
-  # Deliberately 1 rather than 0. Hiding the menu outright leaves key-hold at
-  # power-on as the only route to `work`, and sd-boot(7) warns that window "might
-  # be short" on fast firmware — the beelink cold-boots in ~10s, so it is exactly
-  # the kind of box where it can be missed. That escape hatch is not
-  # hypothetical: it is how the beelink was recovered when its NIC came up on the
-  # wrong network, since kiosk mode has no NetworkManager applet.
+  # Two independent routes back to the `work` specialisation, which matters
+  # because kiosk mode has no NetworkManager applet, so `work` is how a box gets
+  # rescued when its networking is wrong:
   #
-  # mkDefault so a box can trial 0 on its own (see hosts/beelink/default.nix)
-  # without moving the others. Paired with systemd-boot.editor = false
+  #   * Hold space at power-on. sd-boot(7) warns this window "might be short" on
+  #     fast firmware, and it tap-tap-taps better than a single long hold.
+  #     Confirmed catchable on the beelink (2026-08-17), which reaches the loader
+  #     in ~10s. Spot-check it on each box — the OptiPlexes run different
+  #     firmware and have not been tested.
+  #   * Force the menu remotely over SSH — no keyboard, no timing:
+  #       systemctl reboot --boot-loader-menu=15   # next boot only, self-clearing
+  #       systemctl reboot --boot-loader-entry=…   # straight into `work`
+  #     Confirmed on the beelink: a 15s one-shot added ~13s to a 23s boot and the
+  #     EFI variable cleared itself afterwards. This is the real safety net — a
+  #     box with working SSH cannot be locked out of `work` however the timeout
+  #     is set, which is what makes 0 safe here.
+  #
+  # mkDefault so a single host can override; 0 is the wrong answer for any box
+  # that will sit somewhere without SSH. Paired with systemd-boot.editor = false
   # (modules/core/bootloader.nix), which is what actually closes the root shell.
-  #
-  # Worth knowing before setting 0 anywhere: the menu can also be forced
-  # remotely over SSH, no keyboard and no timing involved, via sd-boot's
-  # one-shot EFI variable —
-  #   systemctl reboot --boot-loader-menu=15    # next boot only, then reverts
-  #   systemctl reboot --boot-loader-entry=…    # boot straight into `work`
-  # so a box with working SSH is never actually locked out of `work`.
-  boot.loader.timeout = lib.mkDefault 1;
+  boot.loader.timeout = lib.mkDefault 0;
 
   # Boot-menu alternative: full desktop, listed automatically by systemd-boot.
   # The default entry stays kiosk mode.
