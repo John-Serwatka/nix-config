@@ -23,6 +23,11 @@ hostname := `hostname`
 hov_root := "/home/withrin/PocketLoreStudios/Swiggins/HoV/Kiosk"
 hov_dir := hov_root / "build"
 
+# Veilkeeper working area. Godot exports the kiosk build straight here, run.sh
+# and all, so there is nothing to unpack and no prep step mirroring `hov-prep`
+# — the export directory is deployable exactly as it lands.
+veilkeeper_dir := "/home/withrin/PocketLoreStudios/Projects/Veilkeeper/Builds/Kiosk"
+
 # Show all available recipes (runs when `just` is called with no arguments).
 default:
     @just --list
@@ -293,6 +298,16 @@ hov-prep:
 [group('kiosk')]
 kiosk-deploy-hov host: hov-prep
     just kiosk-deploy {{ hov_dir }} HordeOfViscount {{ host }}
+
+# No prep dependency, unlike the hov recipes: the Godot export is already a
+# runnable tree. `Veilkeeper` matches the directory name already on the boxes,
+# so a redeploy replaces in place rather than orphaning the old build under a
+# second name.
+
+# Deploy Veilkeeper to <host>.
+[group('kiosk')]
+kiosk-deploy-veilkeeper host:
+    just kiosk-deploy {{ veilkeeper_dir }} Veilkeeper {{ host }}
 
 # Stage the Windows build into win-build/ and add its wine launcher.
 [group('kiosk')]
