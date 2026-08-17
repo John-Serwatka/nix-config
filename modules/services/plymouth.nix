@@ -55,6 +55,25 @@ in {
     inherit logo;
   };
 
+  # KNOWN AND ACCEPTED: the logo appears on *shutdown* but not on boot; the boot
+  # is silent-but-black. Do not spend another afternoon on this without new
+  # information — the following was measured on the beelink 2026-08-17.
+  #
+  # plymouth starts at ~1.1s, when the only DRM device is the EFI
+  # simple-framebuffer; amdgpu does not finish taking over modesetting until
+  # ~6.7s, by which point plymouth's surface is gone. Shutdown works precisely
+  # because the driver is already loaded there.
+  #
+  # Loading amdgpu from the initrd was tried and REJECTED. It did move the
+  # driver up (6.7s -> 3.7s) but plymouth still started first at 1.3s, so the
+  # screen stayed black — while the initrd went 35.4 MiB -> 69.1 MiB (the
+  # firmware blobs) and the initrd stage went 2.2s -> 3.8s. All cost, no splash.
+  #
+  # If it is ever worth another attempt, the lead is ordering rather than module
+  # placement: hold plymouth-start until a real DRM device exists, via
+  # boot.initrd.systemd.services.plymouth-start. Note that even then the splash
+  # cannot appear before ~3.7s of a ~19s boot.
+
   # Plymouth draws the splash, but the kernel and udev keep writing to the
   # console underneath and that text tears straight through it. These are what
   # actually make the boot quiet — without them the logo flickers over scrolling
