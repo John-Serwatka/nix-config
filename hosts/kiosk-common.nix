@@ -227,6 +227,31 @@ in {
   # WiFi/GPU firmware blobs (the Beelink has wireless; harmless on the OptiPlex).
   hardware.enableRedistributableFirmware = true;
 
+  # Radios off at a booth. A kiosk is always on wired ethernet, and an *enabled*
+  # WiFi client keeps emitting probe requests even when it is not associated, so
+  # at a con the box would quietly announce itself all day. rfkill powers the
+  # radio down rather than merely telling NetworkManager to leave it alone —
+  # that is the difference between silent and just disconnected.
+  #
+  # Generic on purpose: no driver names, so it is a no-op on the OptiPlexes
+  # (no radio at all) and covers any future kiosk with no edit. Ordered after
+  # NetworkManager so NM cannot race it by bringing the interface back up.
+  #
+  # Saved WiFi profiles are deliberately left in place — blocked, not deleted —
+  # so the `work` session stays a usable recovery path if wired networking ever
+  # fails at a venue. Reversible at a console with no rebuild:
+  #   sudo rfkill unblock wifi
+  systemd.services.kiosk-rfkill = {
+    description = "Block WiFi and Bluetooth radios on the kiosk";
+    wantedBy = ["multi-user.target"];
+    after = ["NetworkManager.service" "systemd-rfkill.service"];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      ExecStart = "${pkgs.util-linux}/bin/rfkill block wifi bluetooth";
+    };
+  };
+
   # Near-invisible boot menu at a booth: at 1s the default kiosk entry starts
   # essentially immediately, so a passer-by never gets a menu to poke at, while
   # the `work` specialisation below stays reliably reachable.
