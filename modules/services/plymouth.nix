@@ -64,6 +64,10 @@ in {
   # ~6.7s, by which point plymouth's surface is gone. Shutdown works precisely
   # because the driver is already loaded there.
   #
+  # Not a vendor quirk — the OptiPlexes do the same thing with Intel: simpledrm
+  # at 1.28s, plymouth at 1.40s, i915 not until 6.38s. All three kiosks boot
+  # silent-but-black for the same reason.
+  #
   # Loading amdgpu from the initrd was tried and REJECTED. It did move the
   # driver up (6.7s -> 3.7s) but plymouth still started first at 1.3s, so the
   # screen stayed black — while the initrd went 35.4 MiB -> 69.1 MiB (the
