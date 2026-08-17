@@ -76,6 +76,7 @@ in {
     ../modules/services/avahi.nix
     ../modules/services/kiosk.nix
     ../modules/services/networking.nix
+    ../modules/services/plymouth.nix
   ];
 
   myConfig.kiosk.enable = true;
