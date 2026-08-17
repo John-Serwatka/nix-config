@@ -461,16 +461,23 @@ kiosk-status host:
 # Costs a few seconds more than killing just the game, because PipeWire and the
 # logind session are rebuilt too. Worth it for something run at a venue: there
 # is no partial state left to reason about.
+#
+# Over root rather than `sudo`, matching `deploy-root`. withrin's sudo on the
+# kiosks is password-protected, which needed `ssh -t` and a human at the
+# keyboard — so these could not be scripted or chained after a deploy. Root is
+# key-only (PermitRootLogin prohibit-password) and already authorized on every
+# kiosk by hosts/kiosk-common.nix, so this grants nothing that `just deploy-root`
+# did not already have.
 
 # Restart the kiosk session to pick up a freshly deployed build.
 [group('kiosk')]
 kiosk-restart host:
-    ssh -t withrin@{{ host }} 'sudo loginctl terminate-user kiosk'
+    ssh root@{{ host }} 'loginctl terminate-user kiosk'
 
 # Reboot a kiosk host to pick up a freshly deployed build.
 [group('kiosk')]
 kiosk-reboot host:
-    ssh withrin@{{ host }} sudo reboot
+    ssh root@{{ host }} reboot
 
 # Tail the kiosk launcher's logs on a host.
 [group('kiosk')]
