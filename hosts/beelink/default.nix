@@ -27,5 +27,15 @@
 
   networking.hostName = "beelink";
 
+  # Trialling the hidden boot menu on this box before moving the OptiPlexes to
+  # it (kiosk-common defaults to 1). Overriding here rather than there so a
+  # failed key-hold test only affects one machine.
+  #
+  # Safe to try because losing the menu does not lose the box: SSH over ethernet
+  # reaches root, and `systemctl reboot --boot-loader-menu=N` forces the menu on
+  # the next boot regardless of the timeout. Revert to 1 if space-hold turns out
+  # not to be catchable on this firmware.
+  boot.loader.timeout = 0;
+
   system.stateVersion = "26.05";
 }

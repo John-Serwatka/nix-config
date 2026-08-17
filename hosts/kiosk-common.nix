@@ -257,14 +257,23 @@ in {
   # the `work` specialisation below stays reliably reachable.
   #
   # Deliberately 1 rather than 0. Hiding the menu outright leaves key-hold at
-  # power-on as the only route to `work`, and that window can be very tight on
-  # fast UEFI firmware — unverified on these boxes, and getting it wrong means
-  # no way in short of a USB stick. That escape hatch is not hypothetical: it
-  # is how the beelink was recovered when its NIC came up on the wrong network,
-  # since kiosk mode has no NetworkManager applet. Drop to 0 once key-hold is
-  # confirmed on each box. Paired with systemd-boot.editor = false
+  # power-on as the only route to `work`, and sd-boot(7) warns that window "might
+  # be short" on fast firmware — the beelink cold-boots in ~10s, so it is exactly
+  # the kind of box where it can be missed. That escape hatch is not
+  # hypothetical: it is how the beelink was recovered when its NIC came up on the
+  # wrong network, since kiosk mode has no NetworkManager applet.
+  #
+  # mkDefault so a box can trial 0 on its own (see hosts/beelink/default.nix)
+  # without moving the others. Paired with systemd-boot.editor = false
   # (modules/core/bootloader.nix), which is what actually closes the root shell.
-  boot.loader.timeout = 1;
+  #
+  # Worth knowing before setting 0 anywhere: the menu can also be forced
+  # remotely over SSH, no keyboard and no timing involved, via sd-boot's
+  # one-shot EFI variable —
+  #   systemctl reboot --boot-loader-menu=15    # next boot only, then reverts
+  #   systemctl reboot --boot-loader-entry=…    # boot straight into `work`
+  # so a box with working SSH is never actually locked out of `work`.
+  boot.loader.timeout = lib.mkDefault 1;
 
   # Boot-menu alternative: full desktop, listed automatically by systemd-boot.
   # The default entry stays kiosk mode.
