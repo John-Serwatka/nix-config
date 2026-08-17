@@ -426,6 +426,11 @@ run-local dir=hov_dir:
     cd "{{ dir }}"
     LD_LIBRARY_PATH="$sys/sw/share/nix-ld/lib" exec ./run.sh
 
+# Run Veilkeeper locally with the kiosk library environment.
+[group('kiosk')]
+run-local-veilkeeper:
+    just run-local {{ veilkeeper_dir }}
+
 # Show which build is live on a kiosk, and what else is sitting in /opt/kiosk.
 [group('kiosk')]
 kiosk-status host:
