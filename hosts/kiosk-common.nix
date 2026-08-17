@@ -227,17 +227,19 @@ in {
   # WiFi/GPU firmware blobs (the Beelink has wireless; harmless on the OptiPlex).
   hardware.enableRedistributableFirmware = true;
 
-  # No boot menu at a booth: the default kiosk entry starts immediately, so a
-  # passer-by never sees a menu to poke at. The menu — and with it the `work`
-  # specialisation below — stays reachable by holding a key at power-on.
+  # Near-invisible boot menu at a booth: at 1s the default kiosk entry starts
+  # essentially immediately, so a passer-by never gets a menu to poke at, while
+  # the `work` specialisation below stays reliably reachable.
   #
-  # VERIFY THAT KEY-HOLD ON EACH BOX before relying on this. systemd-boot
-  # documents the behaviour, but the window can be very tight on fast UEFI
-  # firmware, and getting it wrong means no route to `work` without a USB. If it
-  # is not reliably catchable on a given box, use 1 instead — nearly all the
-  # benefit, no lockout risk. Paired with systemd-boot.editor = false
+  # Deliberately 1 rather than 0. Hiding the menu outright leaves key-hold at
+  # power-on as the only route to `work`, and that window can be very tight on
+  # fast UEFI firmware — unverified on these boxes, and getting it wrong means
+  # no way in short of a USB stick. That escape hatch is not hypothetical: it
+  # is how the beelink was recovered when its NIC came up on the wrong network,
+  # since kiosk mode has no NetworkManager applet. Drop to 0 once key-hold is
+  # confirmed on each box. Paired with systemd-boot.editor = false
   # (modules/core/bootloader.nix), which is what actually closes the root shell.
-  boot.loader.timeout = 0;
+  boot.loader.timeout = 1;
 
   # Boot-menu alternative: full desktop, listed automatically by systemd-boot.
   # The default entry stays kiosk mode.
