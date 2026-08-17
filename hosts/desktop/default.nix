@@ -84,10 +84,6 @@
   # Re-derive an entry if a box is ever removed from and re-added to the tailnet;
   # it gets a new address. Check with `tailscale status`.
   #
-  # optiplex2 and beelink are absent because they have not joined yet — they
-  # still need the deploy carrying the real auth key. Add them once
-  # `tailscale status` shows them.
-  #
   # REMOTE ONLY. These are tailnet addresses, so they need internet — at a venue
   # with none, the tailnet is unavailable and `ssh optiplex` resolves to an
   # unroutable 100.x address and *hangs* rather than failing. On site use the
@@ -95,6 +91,8 @@
   #   ssh optiplex.local
   networking.hosts = {
     "100.91.165.90" = ["optiplex"];
+    "100.108.113.115" = ["optiplex2"];
+    "100.108.89.104" = ["beelink"];
   };
 
   system.stateVersion = "25.05";
