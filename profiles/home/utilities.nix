@@ -9,6 +9,17 @@
   home.packages = with pkgs; [
     udiskie # automount tray daemon
     flameshot # screenshot to clipboard
-    seafile-client # Seafile desktop client (self-hosted drive on pi)
+
+    # The household Drive. Syncs a local folder against Nextcloud on `core`
+    # (https://drive.johnserwatka.com) — this is the "folder you work out of"
+    # that the whole homelab migration existed to provide.
+    nextcloud-client
+
+    # Kept deliberately during the transition, not left behind by accident.
+    # Seafile still runs on pi-server as the migration's rollback, and the one
+    # ENCRYPTED library (SecretsBackup) can only be extracted through a client
+    # that knows its passphrase — `seaf-fsck --export` cannot decrypt it. Drop
+    # this once Seafile is retired and that library is dealt with.
+    seafile-client
   ];
 }
