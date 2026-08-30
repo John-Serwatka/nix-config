@@ -49,9 +49,27 @@
   # Configured users are added to the docker group automatically (modules/core/users.nix).
   virtualisation.docker.enable = true;
 
-  # Trust the self-hosted Caddy private CA (cert lives in ../../certs).
+  # Trust the self-hosted Caddy private CAs (certs live in ../../certs).
+  #
+  # Two of them, because there are two Caddy instances and each runs its own
+  # internal CA — they are unrelated roots, not a shared one:
+  #
+  #   caddy-ca.crt       pi-server's, "Caddy Local Authority - 2025 ECC Root".
+  #                      Serves vault.home.com and drive.johnserwatka.com.
+  #   core-caddy-ca.crt  core's, "Caddy Local Authority - 2026 ECC Root".
+  #                      Serves dash.home.arpa and status.home.arpa, and
+  #                      budget.johnserwatka.com until it gets a real
+  #                      certificate at cutover.
+  #
+  # Without core's root here, its hosts resolve fine but every request is a
+  # certificate error — trusting the Pi's CA does nothing for core.
+  #
+  # Re-extract if core is ever reinstalled (the CA is regenerated with it):
+  #   ssh withrin@core 'curl -s localhost:2019/pki/ca/local' \
+  #     | jq -r .root_certificate > certs/core-caddy-ca.crt
   security.pki.certificates = [
     (builtins.readFile ../../certs/caddy-ca.crt)
+    (builtins.readFile ../../certs/core-caddy-ca.crt)
   ];
 
   myConfig.graphics.vendor = "nvidia";
@@ -92,7 +110,26 @@
   networking.hosts = {
     "100.91.165.90" = ["optiplex"];
     "100.108.113.115" = ["optiplex2"];
-    "100.108.89.104" = ["beelink"];
+
+    # The `beelink` pin (100.108.89.104) is gone: that box was reinstalled as
+    # the homelab server `core` and left the kiosk fleet, so the tailnet node it
+    # named no longer exists. Its replacement is below.
+
+    # The homelab server. A LAN address, not a tailnet one, unlike the kiosks
+    # above — this machine sits on the same subnet as the desktop and holds a
+    # DHCP reservation, so the LAN path always works and does not depend on the
+    # tailnet being reachable.
+    #
+    # dash/status.home.arpa are Caddy virtual hosts on core (see the homelab
+    # repo, modules/services/caddy.nix). They resolve nowhere else — `home.arpa`
+    # is RFC 8375's reserved domain for home networks and has no public DNS — so
+    # without this entry the browser simply fails to resolve them.
+    #
+    # Not listed here: budget.johnserwatka.com. That name has a public A record
+    # still pointing at pi-server (192.168.0.250), which is deliberate — the Pi
+    # serves it until the sub-project 4 cutover, which is a DNS record change
+    # rather than anything on this machine.
+    "192.168.0.125" = ["core" "dash.home.arpa" "status.home.arpa"];
   };
 
   system.stateVersion = "25.05";
