@@ -20,7 +20,6 @@
     ../../modules/services/avahi.nix
     ../../modules/services/desktop.nix
     ../../modules/services/flatpak.nix
-    ../../modules/services/syncthing.nix
     ../../modules/services/printing.nix
     ../../modules/services/asusd.nix
     ../../modules/services/networking.nix

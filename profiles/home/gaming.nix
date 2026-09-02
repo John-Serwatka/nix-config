@@ -9,7 +9,7 @@
   home.packages = with pkgs; [
     prismlauncher # Minecraft launcher
     lutris # Linux game manager
-    #heroic          # Epic/GOG launcher
+    heroic # Epic/GOG launcher
     protonup-rs # Proton-GE updater
     wine
     winetricks

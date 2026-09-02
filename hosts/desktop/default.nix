@@ -21,7 +21,6 @@
     ../../modules/services/desktop.nix
     ../../modules/services/flatpak.nix
     ../../modules/services/ollama.nix
-    ../../modules/services/syncthing.nix
     ../../modules/services/networking.nix
 
     # Hardware
