@@ -33,6 +33,7 @@
     fd
     tree
     claude-code
+    codex
     github-cli
     git-cliff
   ];
