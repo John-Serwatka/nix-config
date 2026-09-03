@@ -19,3 +19,8 @@ result-*
 keys.txt
 *.dec
 
+# Scratch directory for raw key material (data/rsa_key.pem). Nothing in the
+# flake reads from here, so it is local-only — unlike secrets/, which is
+# sops-encrypted and tracked.
+data/
+
