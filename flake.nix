@@ -3,6 +3,26 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+
+    # Ollama's CUDA build, deliberately pinned to a fixed revision.
+    #
+    # `ollama-cuda` is not in cache.nixos.org — Hydra does not publish
+    # CUDA-enabled outputs — and cuda-maintainers.cachix.org does not carry it
+    # either. So every nixpkgs bump forced a full local ollama+CUDA compile on
+    # the desktop; the store still holds 0.30.5, 0.31.1 and 0.33.1 from exactly
+    # that. Pinning a *rev* is what stops it. Pinning a stable *branch* would
+    # not: stable's ollama-cuda is just as uncached, it would only be hit less
+    # often.
+    #
+    # No `follows` here on purpose — making this track nixpkgs would defeat the
+    # entire point of the pin.
+    #
+    # This is the rev nixpkgs itself was locked to when the pin was introduced,
+    # so adopting it rebuilt nothing. Moving it is a deliberate act:
+    #   nix flake update nixpkgs-ollama
+    # and it costs one long CUDA compile every time.
+    nixpkgs-ollama.url = "github:NixOS/nixpkgs/d2f67949798825fe853f7c5d0492b8bf016d3f88";
+
     home-manager.url = "github:nix-community/home-manager";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
 
@@ -19,6 +39,7 @@
   outputs = {
     self,
     nixpkgs,
+    nixpkgs-ollama,
     home-manager,
     sops-nix,
     disko,
@@ -26,6 +47,23 @@
   }: let
     system = "x86_64-linux";
     mkHost = import ./lib/mkHost.nix {inherit nixpkgs home-manager sops-nix disko;};
+
+    # Feeds the pinned ollama-cuda (see the nixpkgs-ollama input above) to the
+    # hosts that import modules/services/ollama.nix — currently just the
+    # desktop. Only that one attribute is overridden, so nothing else on the
+    # host is affected and no other package rebuilds.
+    ollamaPin = {
+      nixpkgs.overlays = [
+        (_final: _prev: {
+          ollama-cuda =
+            (import nixpkgs-ollama {
+              inherit system;
+              config.allowUnfree = true;
+            })
+            .ollama-cuda;
+        })
+      ];
+    };
   in {
     # `nix fmt` formats every .nix file with Alejandra.
     formatter.${system} = nixpkgs.legacyPackages.${system}.alejandra;
@@ -34,7 +72,7 @@
       desktop = mkHost {
         hostname = "desktop";
         users = ["withrin"];
-        modules = [./hosts/desktop/default.nix];
+        modules = [./hosts/desktop/default.nix ollamaPin];
       };
 
       # withrin stays first so it remains myConfig.primaryUser (Syncthing, the

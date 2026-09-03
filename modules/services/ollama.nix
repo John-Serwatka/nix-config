@@ -6,6 +6,12 @@
 # NOTE: uses the CUDA build, so only import this on hosts with an NVIDIA GPU
 # (currently the desktop). Split the package choice out per-host if an AMD/CPU
 # host ever needs Ollama (pkgs.ollama-rocm / pkgs.ollama).
+#
+# `pkgs.ollama-cuda` below is NOT the one from this host's nixpkgs: flake.nix
+# overlays it with a copy pinned to a fixed revision, because the CUDA build is
+# absent from every binary cache and would otherwise recompile on every nixpkgs
+# bump. See the nixpkgs-ollama input in flake.nix for the full reasoning and for
+# how to move the pin.
 {pkgs, ...}: {
   services.ollama = {
     enable = true;
