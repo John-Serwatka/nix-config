@@ -6,7 +6,7 @@
   home.packages = with pkgs; [
     obsidian
     gnome-pomodoro
-    libreoffice-qt-fresh
+    libreoffice-qt-stable
     bitwarden-desktop
 
     # KDE PIM suite
