@@ -2,8 +2,7 @@
   # install the input stack system-wide
   environment.systemPackages = with pkgs; [
     #ckb-next
-    piper
-    libratbag
+    piper # GUI; libratbag itself comes from services.ratbagd below
   ];
 
   # enable the device daemon for all users

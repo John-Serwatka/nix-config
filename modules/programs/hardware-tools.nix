@@ -6,7 +6,8 @@
 {pkgs, ...}: {
   environment.systemPackages = with pkgs; [
     usbutils # lsusb
-    udisks # disk management
     lm_sensors # hardware temperature monitoring
+    # udisks is not listed: services.udisks2 (enabled by Plasma) installs it,
+    # and pkgs.udisks is the same derivation as pkgs.udisks2.
   ];
 }

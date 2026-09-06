@@ -1,8 +1,7 @@
 # modules/programs/cli.nix — core command-line tools available on all hosts
 {pkgs, ...}: {
   environment.systemPackages = with pkgs; [
-    vim
-    nano
+    vim # nano is not listed: programs.nano.enable defaults to true
     git
     wget
     just # Recipe runner for this flake's justfile

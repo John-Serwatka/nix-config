@@ -14,10 +14,10 @@
     kdePackages.korganizer
     kdePackages.kmail
     kdePackages.kdepim-addons
-    kdePackages.kdepim-runtime
     kdePackages.kaccounts-integration
     kdePackages.kaccounts-providers
-    kdePackages.akonadi
     kdePackages.akonadi-mime
+    # akonadi and kdepim-runtime are not listed: programs.kde-pim installs
+    # exactly those two, and plasma6 enables it by default.
   ];
 }

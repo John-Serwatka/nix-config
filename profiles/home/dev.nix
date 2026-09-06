@@ -22,7 +22,7 @@
 
   home.packages = with pkgs; [
     # Editors / IDEs
-    kdePackages.kate
+    # kate is not listed: it ships with Plasma (modules/services/desktop.nix).
     jetbrains.idea
     jetbrains.rider
     jetbrains.webstorm
