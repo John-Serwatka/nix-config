@@ -6,9 +6,22 @@
 # This is the first slice of the hybrid model: host-level needs stay in
 # environment.systemPackages, user-owned tools live in Home Manager profiles.
 {pkgs, ...}: {
+  # Owns EDITOR and VISUAL: defaultEditor sets both, so the editor is declared
+  # by the same profile that installs it.
+  programs.neovim = {
+    enable = true;
+    defaultEditor = true;
+
+    # Match what bare `pkgs.neovim` gave us: `wrapNeovim neovim-unwrapped {}`
+    # has every provider off. Home Manager still defaults these to `true` under
+    # home.stateVersion < 26.05, which would drag Ruby and a pynvim Python into
+    # the closure for providers nothing here uses.
+    withRuby = false;
+    withPython3 = false;
+  };
+
   home.packages = with pkgs; [
     # Editors / IDEs
-    neovim
     kdePackages.kate
     jetbrains.idea
     jetbrains.rider

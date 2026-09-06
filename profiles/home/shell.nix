@@ -35,7 +35,9 @@
     nix-direnv.enable = true;
   };
 
-  home.sessionVariables = {
-    EDITOR = "nvim"; # provided by profiles/home/dev.nix; override per user if needed
-  };
+  # No EDITOR here on purpose. This profile is imported by every user on every
+  # host, including booth-admin, which has no editor of its own — announcing
+  # `nvim` from here pointed that account at a binary it never installed.
+  # Whichever profile installs the editor owns EDITOR (see programs.neovim.
+  # defaultEditor in profiles/home/dev.nix and users/withrin/home-kiosk.nix).
 }
