@@ -8,6 +8,12 @@
     just # Recipe runner for this flake's justfile
     unzip # Game builds ship as zips (see `just hov-prep`)
     binutils # readelf/ldd work when inspecting foreign game binaries
-    pinentry-gnome3 # GPG passphrase entry (used by gpg-agent)
   ];
+
+  # No pinentry here. A pinentry binary does nothing on its own — it is picked
+  # by gpg-agent, and no host enables one (programs.gnupg.agent is off
+  # everywhere and gnupg is not installed). If GPG is ever wanted, set
+  # programs.gnupg.agent.enable on the host: that installs gnupg, socket-
+  # activates the agent, exports GPG_TTY, and selects the pinentry flavour
+  # itself — pinentry-qt under Plasma, curses on the headless kiosks.
 }
