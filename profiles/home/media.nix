@@ -7,7 +7,8 @@
     spotify
     vlc
     kooha
-    obs-studio
+    # obs-studio is host-side now, so it can have the virtual camera —
+    # see modules/programs/obs.nix.
     ffmpeg
   ];
 }
