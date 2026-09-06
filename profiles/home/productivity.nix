@@ -7,7 +7,7 @@
     obsidian
     gnome-pomodoro
     libreoffice-qt-fresh
-    # bitwarden-desktop
+    bitwarden-desktop
 
     # KDE PIM suite
     kdePackages.kalarm

@@ -9,6 +9,5 @@
     unzip # Game builds ship as zips (see `just hov-prep`)
     binutils # readelf/ldd work when inspecting foreign game binaries
     pinentry-gnome3 # GPG passphrase entry (used by gpg-agent)
-    bitwarden-desktop
   ];
 }
