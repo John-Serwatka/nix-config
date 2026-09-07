@@ -39,8 +39,10 @@
 #       users.users.<u>.hashedPasswordFile = config.sops.secrets.<u>_password.path;
 #       networking.wireless.secretsFile     = config.sops.secrets.wifi.path;
 #
-# Note: the Syncthing module has no file-based GUI-password option, so keep that
-# password out of the repo and set it in the Syncthing web UI.
+# A module with no `*File` option cannot take a secret from here at all. That is
+# a reason to keep the credential out of the repo and set it out of band — not a
+# reason to interpolate it. (Syncthing's GUI password was this case; it leaked
+# into git history before the service was retired.)
 #
 # ── Deliberately NOT managed here (yet) — TODO: circle back ────────────────────
 # rclone.conf: the gdrive remote uses an OAuth token that rclone rewrites when it

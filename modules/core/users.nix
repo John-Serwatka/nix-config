@@ -6,8 +6,9 @@
 # (users/<name>/home.nix) are generated from that same list.
 #
 # Anything that needs "the user(s) on this host" should read from here rather than
-# hardcoding a name — e.g. Syncthing defaults to `myConfig.primaryUser`, and Docker
-# group membership is derived below.
+# hardcoding a name — the sops age keyFile path, the owner of /opt/kiosk and
+# nix.settings.trusted-users all resolve through `myConfig.primaryUser`, and
+# Docker group membership is derived below.
 {
   config,
   lib,
@@ -26,7 +27,7 @@ with lib; {
       if config.myConfig.users == []
       then throw "myConfig.users is empty — every host must list at least one user in its mkHost `users = [ ... ]` (flake.nix)."
       else builtins.head config.myConfig.users;
-    description = "The user that single-instance services (e.g. Syncthing) default to.";
+    description = "The user that per-host, single-account settings default to.";
   };
 
   config = {

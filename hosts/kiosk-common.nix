@@ -128,8 +128,8 @@ in {
   # Two ways in, and a kiosk keeps whichever it can get:
   #
   #   * On the home tailnet — reachable from anywhere the box has internet, as
-  #     `beelink`/`optiplex` over MagicDNS. This is how you reach one that lives
-  #     at a venue.
+  #     `optiplex`/`optiplex2` over MagicDNS. This is how you reach one that
+  #     lives at a venue.
   #   * On the LAN — port 22 is already open on the physical interface (openssh
   #     defaults openFirewall = true), so a box on an offline venue network with
   #     no tailnet is still reachable from a laptop on the same switch/AP.
@@ -145,22 +145,22 @@ in {
   # persists in /var/lib/tailscale and the key is never read again, so an expired
   # or rotated key never knocks an already-joined box off the tailnet.
   #
-  # Minting the real key (one-time; replaces the placeholder in secrets.yaml):
+  # A real key is set and both kiosks have joined (`tailscale status`). Rotating
+  # it is safe — joined boxes never read it again — and goes:
   #   * Tailscale admin console → Settings → Keys → Generate auth key
   #   * Reusable + Pre-approved, non-ephemeral (survives reboots). Tag it (e.g.
   #     tag:kiosk) if you gate device approval by ACL.
   #   * SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt \
   #       nix run nixpkgs#sops -- secrets/secrets.yaml   # set tailscale_authkey
-  # Until then the box still boots and LAN SSH still works; only the auto-join is
-  # inert (the placeholder key just fails to authenticate).
+  # A bad key costs only the auto-join: the box still boots and LAN SSH works.
   services.tailscale.enable = true;
   services.tailscale.authKeyFile = config.sops.secrets.tailscale_authkey.path;
   networking.firewall.trustedInterfaces = ["tailscale0"];
 
   # Consumed by tailscale above. Declared here rather than in the shared
   # core/sops.nix so it is kiosk-scoped — desktop/laptop never decrypt a key
-  # they don't use. Present in secrets.yaml (placeholder until a real key is
-  # set), so sops-install-secrets finds it and activation doesn't fail.
+  # they don't use. It must exist in secrets.yaml or sops-install-secrets fails
+  # activation, so keep a placeholder there rather than deleting the entry.
   sops.secrets.tailscale_authkey = {};
 
   # Remote *config* deploys (`just deploy <host>`): nixos-rebuild builds on the
@@ -225,7 +225,9 @@ in {
     }
   ];
 
-  # WiFi/GPU firmware blobs (the Beelink has wireless; harmless on the OptiPlex).
+  # WiFi/GPU firmware blobs. Neither OptiPlex has a radio, so this is currently
+  # only about GPU firmware — kept unconditional so a future kiosk that does
+  # have wireless needs no edit here.
   hardware.enableRedistributableFirmware = true;
 
   # Radios off at a booth. A kiosk is always on wired ethernet, and an *enabled*
@@ -262,9 +264,10 @@ in {
   #
   #   * Hold space at power-on. sd-boot(7) warns this window "might be short" on
   #     fast firmware, and it tap-tap-taps better than a single long hold.
-  #     Confirmed catchable on the beelink (2026-08-17), which reaches the loader
-  #     in ~10s. Spot-check it on each box — the OptiPlexes run different
-  #     firmware and have not been tested.
+  #     Confirmed catchable on the Beelink (2026-08-17), which reached the
+  #     loader in ~10s — but that box has since left the fleet for the homelab,
+  #     so *neither* remaining kiosk has been tested. Spot-check it on each box:
+  #     the OptiPlexes run different firmware.
   #   * Force the menu remotely over SSH — no keyboard, no timing:
   #       systemctl reboot --boot-loader-menu=15   # next boot only, self-clearing
   #       systemctl reboot --boot-loader-entry=…   # straight into `work`

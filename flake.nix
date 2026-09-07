@@ -75,10 +75,10 @@
         modules = [./hosts/desktop/default.nix ollamaPin];
       };
 
-      # withrin stays first so it remains myConfig.primaryUser (Syncthing, the
-      # sops age keyFile path). booth-admin is the low-privilege kiosk-dashboard
-      # operator login; both use the default homeProfile = "home", so each has
-      # its own users/<name>/home.nix.
+      # withrin stays first so it remains myConfig.primaryUser, which is where
+      # the sops age keyFile path comes from on a host with no sshd. booth-admin
+      # is the low-privilege kiosk-dashboard operator login; both use the default
+      # homeProfile = "home", so each has its own users/<name>/home.nix.
       laptop = mkHost {
         hostname = "laptop";
         users = ["withrin" "booth-admin"];

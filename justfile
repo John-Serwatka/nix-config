@@ -92,7 +92,7 @@ commit-help:
     @echo "  revert    Revert a previous commit"
     @echo
     @echo "Examples:"
-    @echo "  feat(kiosk): add beelink host"
+    @echo "  feat(kiosk): add optiplex2 host"
     @echo "  build: bump nixpkgs flake input"
     @echo "  docs: document sops rekey flow"
 
@@ -251,7 +251,7 @@ iso:
 # locally and only the closure is copied, so the kiosks never compile anything.
 #
 # `host` has to work as both an SSH name and a nixosConfigurations attribute in
-# flake.nix — that holds for optiplex and beelink.
+# flake.nix — that holds for optiplex and optiplex2.
 #
 # withrin's sudo on the targets is password-protected (no NOPASSWD), so
 # --ask-sudo-password prompts once per deploy; plain `--sudo` would just hang.
@@ -296,7 +296,7 @@ deploy-root host target=":":
 # Game builds ship independently of NixOS (see modules/services/kiosk.nix):
 # rsync an export into its own directory under /opt/kiosk on the kiosk host,
 # then flip the `current` symlink at it. `host` is an SSH-reachable name (e.g.
-# optiplex, beelink); `game` names the directory under /opt/kiosk; `dir` is
+# optiplex, optiplex2); `game` names the directory under /opt/kiosk; `dir` is
 # the local exported build (must contain an executable run.sh).
 
 # Sync an exported build to <host>:/opt/kiosk/<game>/ and flip `current` at it.

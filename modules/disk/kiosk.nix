@@ -11,7 +11,7 @@
 #
 # Provision a machine with:
 #
-#   disko-install --flake /etc/nix-config#beelink --disk main /dev/nvme0n1
+#   disko-install --flake /etc/nix-config#optiplex2 --disk main /dev/sda
 #
 # `--disk main <device>` overrides myConfig.diskDevice below, so the value here
 # only needs to be right for a plain `nixos-rebuild`.

@@ -10,12 +10,13 @@
   ];
   home.stateVersion = "25.05"; # match the laptop host
 
-  # Reach the kiosks as the restricted booth-control account over the tailnet
-  # (MagicDNS names) with LAN fallback. These blocks must NEVER fall back to an
-  # interactive prompt — a missing key or wrong perms has to fail fast instead of
-  # hanging the TUI — hence BatchMode + every password path disabled + short,
-  # bounded timeouts. Identity is the dedicated booth-control key (generated
-  # one-time, see the repo plan / kiosk-common.nix TODO).
+  # Reach the kiosks as the restricted booth-control account over mDNS — see the
+  # note on the Host blocks below for why deliberately *not* over the tailnet.
+  # These blocks must NEVER fall back to an interactive prompt — a missing key or
+  # wrong perms has to fail fast instead of hanging the TUI — hence BatchMode +
+  # every password path disabled + short, bounded timeouts. Identity is the
+  # dedicated booth-control key (generated one-time, see the repo plan /
+  # kiosk-common.nix TODO).
   #
   # Uses the current programs.ssh.settings interface (the older matchBlocks is a
   # deprecated alias in this Home Manager); bare attr names become `Host` blocks

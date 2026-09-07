@@ -18,8 +18,9 @@ That single list (`lib/mkHost.nix`) drives both the system account
 (`users/<name>/default.nix`) and the Home Manager profile (`users/<name>/home.nix`).
 `home.username` / `home.homeDirectory` are set from it automatically, and
 `modules/core/users.nix` exposes `myConfig.users` / `myConfig.primaryUser` so
-single-instance services (e.g. Syncthing) and Docker group membership follow the
-list instead of a hardcoded name.
+per-host details follow the list instead of a hardcoded name — Docker group
+membership, the owner of `/opt/kiosk`, `nix.settings.trusted-users`, and the
+sops age keyFile path all derive from it.
 
 To add a user:
 
@@ -28,15 +29,30 @@ To add a user:
 2. Add `<name>` to the host's `users = [ ... ]` in `flake.nix`.
 3. Rebuild.
 
-Package ownership is currently shared at the system level. The intended next step
-is a hybrid model: keep host-level needs (drivers, services, desktop basics) as
-system packages, and move user-owned tools (dev/gaming/creative apps) into
-per-user Home Manager profiles imported from each user's `home.nix`.
+## Package ownership
+
+Packages are split on ownership, not on convenience. Host-level needs — drivers,
+services, desktop basics — stay system packages under `modules/`. User-owned
+tools live in Home Manager profiles under `profiles/home/` (`dev`, `gaming`,
+`creative`, `media`, `communication`, `productivity`, `utilities`, `shell`,
+`git`) and each user's `home.nix` imports the ones that user actually wants.
+
+That is what makes a second user cheap: `users/booth-admin/home.nix` imports
+`shell` and nothing else, so the booth operator's account carries the dashboard
+and a usable prompt rather than withrin's nine profiles. A package a host needs
+whether or not anyone logs in belongs in a module; anything else belongs in a
+profile.
 
 ## Formatting
 
-Run `nix fmt` to format all Nix files in the repository using the Alejandra
-formatter provided by this flake.
+```bash
+nix fmt .          # format every .nix file in the tree
+```
+
+The trailing `.` is not optional. This flake's `formatter` output is Alejandra
+itself, and Alejandra with no path argument reads *stdin* — so a bare `nix fmt`
+formats nothing and exits with `unexpected end of file` on an empty stdin.
+Pass a path (or `nix fmt path/to/file.nix` for one file).
 
 ## Secrets
 
@@ -49,12 +65,20 @@ Setup and usage are documented inline in `modules/core/sops.nix`; recipient keys
 live in `.sops.yaml` and encrypted material goes under `secrets/`. Until a key
 and secrets file exist the secrets layer is inert, so the config still builds.
 
-The Syncthing GUI password must **not** be committed (a stale one already leaked
-in git history — rotate it); set it in the Syncthing web UI instead.
+`secrets/secrets.yaml` currently holds three entries: `withrin_password` and
+`booth_admin_password` (login password hashes, consumed as
+`hashedPasswordFile`) and `tailscale_authkey` (the kiosks' unattended-join key).
+Each is consumed through a *file-based* option — never interpolated into a Nix
+string, which would land it world-readable in the store.
+
+Not every credential can go here: an option has to accept a file path. Syncthing
+was the counter-example, and its GUI password leaked into git history before it
+was retired — treat anything with no `*File` option as a secret to set out of
+band, not one to commit.
 
 ## Game kiosks
 
-`optiplex` and `beelink` boot straight into a game (`hosts/kiosk-common.nix`,
+`optiplex` and `optiplex2` boot straight into a game (`hosts/kiosk-common.nix`,
 `modules/services/kiosk.nix`). greetd autologins a passwordless `kiosk` user
 whose session is a supervising launcher running the game fullscreen under
 gamescope, relaunching it whenever it exits.
@@ -62,12 +86,31 @@ gamescope, relaunching it whenever it exits.
 The boot menu also carries a `work` specialisation — Plasma 6 + SDDM with the
 kiosk force-disabled — for doing maintenance on the box itself.
 
+### The Beelink is `core` now, not a kiosk
+
+The fleet used to be three boxes. The Beelink SER left it: that machine was
+reinstalled as **`core`, the homelab server**, and is the house's core
+infrastructure now — Caddy, Actual Budget, Uptime Kuma and Dashy today, with the
+rest of the Pi's services migrating onto it. It lives on the LAN behind a DHCP
+reservation and does not travel to events.
+
+**`core` is not configured from this flake.** It has its own repository, pinned
+to stable `nixos-26.05` where this one tracks `nixos-unstable`. There is no
+`beelink` host here any more — output, `hosts/beelink/` and age recipient are
+all gone.
+
+What this repo still holds about `core` is only how the desktop reaches it, both
+pieces in `hosts/desktop/default.nix`: a `networking.hosts` entry, because
+`home.arpa` has no public DNS, **and** core's own Caddy root CA in
+`security.pki.certificates`, because core runs its own CA. Fixing only the first
+turns "cannot resolve" into "certificate error".
+
 ### Remote access (Tailscale + LAN)
 
 A kiosk keeps two independent ways in, and uses whichever it can get:
 
 - **Tailnet** — `services.tailscale.enable` in `hosts/kiosk-common.nix`. When the
-  box has internet it's reachable from anywhere as `optiplex` / `beelink` over
+  box has internet it's reachable from anywhere as `optiplex` / `optiplex2` over
   MagicDNS. `tailscale0` is a trusted interface, so SSH — and therefore
   `just deploy` and `just kiosk-deploy`, which are both SSH — work over the
   tailnet with no extra ports opened. This is how you reach a box at a venue.
@@ -81,24 +124,24 @@ fresh box joins on first boot. The key is read only while unauthenticated —
 once joined, `/var/lib/tailscale` persists and a later expiry/rotation never
 drops the node. Both `withrin@desktop` and `withrin@laptop` are authorized.
 
-> **⚠️ Pending — not yet live on the kiosks.** Both boxes are offline as of
-> 2026-07-30, so the config above is committed but unrolled. `secrets.yaml`
-> holds a **placeholder** auth key (`tskey-auth-REPLACE-WITH-REAL-REUSABLE-KEY`);
-> the boxes will boot and answer LAN SSH but will not auto-join the tailnet
-> until it's replaced. When they're back online, in order:
->
-> 1. Mint a **reusable, pre-approved, non-ephemeral** key in the Tailscale admin
->    console (Settings → Keys). Tag it (e.g. `tag:kiosk`) if you gate device
->    approval by ACL.
-> 2. Replace the placeholder:
->    `SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt nix run nixpkgs#sops -- secrets/secrets.yaml`
-> 3. **Deploy from the desktop first** — the kiosks currently authorize only
->    `withrin@desktop`, so the bootstrap deploy that installs Tailscale + the
->    laptop key has to come from there over the LAN:
->    `just deploy optiplex && just deploy beelink`. After it lands, the laptop
->    can deploy to them too.
-> 4. Confirm they joined: `tailscale status` should list both, and
->    `ssh withrin@beelink` should work from off-LAN.
+This is live: `tailscale status` lists `optiplex` and `optiplex2` alongside
+`desktop`, `laptop` and `core`, and `secrets.yaml` holds a real reusable key.
+A box that is powered off shows as "offline, last seen …" — that is not the same
+as never having joined.
+
+Replacing the key (it does not knock joined boxes off — they only read it while
+unauthenticated) means minting a **reusable, pre-approved, non-ephemeral** key
+in the admin console under Settings → Keys, then:
+
+```bash
+SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt \
+    nix run nixpkgs#sops -- secrets/secrets.yaml   # set tailscale_authkey
+just deploy optiplex && just deploy optiplex2
+```
+
+A brand-new box has to be bootstrapped **from the desktop**: `hosts/kiosk-common.nix`
+authorizes `withrin@desktop` and `withrin@laptop`, but a box that has never been
+deployed to only has whatever its install image carried.
 
 ### Two independent deploys
 
@@ -195,7 +238,7 @@ collapses to:
 
 ```bash
 lsblk                        # confirm the device first
-disko-install --flake /etc/nix-config#beelink --disk main /dev/nvme0n1
+disko-install --flake /etc/nix-config#optiplex2 --disk main /dev/sda
 ```
 
 That partitions, formats, mounts and installs. `--disk main <device>` overrides
@@ -213,7 +256,7 @@ Only the ones that get reinstalled:
 
 | Host | Filesystems from | Why |
 | --- | --- | --- |
-| `beelink` | disko | Kiosk — reprovisioned, spare hardware |
+| `optiplex2` | disko | Kiosk — provisioned with disko from the start, so it has no `hardware.nix` at all |
 | `optiplex` | `hardware.nix` | Kiosk, but already installed; convert at its next reinstall |
 | `desktop`, `laptop` | `hardware.nix` | Installed once; disko earns nothing |
 
@@ -242,26 +285,21 @@ step is how `hosts/optiplex/hardware.nix` sat as an unbootable placeholder in
 git while the real file existed only in the working tree on the machine — the
 box could not be deployed to from anywhere else.
 
-## Spotify via Flatpak
+## Flatpak
 
-If you prefer running Spotify through Flatpak, make sure the Flatpak
-service is enabled. This repo sets it in `modules/services/flatpak.nix`:
+`modules/services/flatpak.nix` enables Flatpak and the KDE XDG desktop portal.
+It is deliberately an escape hatch, not the default way to install anything:
+declared packages belong in a `profiles/home/*` profile so they are reproducible
+and roll back with the generation. Flatpak covers what nixpkgs does not have, or
+what needs a vendor build.
 
-```nix
-services.flatpak.enable = true;
-```
-
-After rebuilding, install Spotify with:
-
-```bash
-flatpak install flathub com.spotify.Client
-```
-
-If you run into issues starting the native `spotify` package, you can try
-running it in an FHS environment via:
+Nothing is installed declaratively through it — Flatpak apps are installed by
+hand and are not part of the flake:
 
 ```bash
-steam-run spotify
+flatpak install flathub <app-id>
 ```
 
-or a custom wrapper such as `buildFHSUserEnv`.
+Spotify is *not* one of them: it is a native package in
+`profiles/home/media.nix`. If a foreign binary fails to start because it wants a
+filesystem layout Nix does not provide, `steam-run <cmd>` is the quick test.
