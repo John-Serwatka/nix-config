@@ -7,9 +7,9 @@
 #
 #   install-kiosk
 #
-# The image carries the Beelink's *prebuilt* system closure and its *prebuilt*
-# disko partitioning script, so installing needs no network and — critically —
-# no Nix evaluation on the target. Both of those matter:
+# The image carries a kiosk's *prebuilt* system closure and its *prebuilt* disko
+# partitioning script, so installing needs no network and — critically — no Nix
+# evaluation on the target. Both of those matter:
 #
 #   * No network: a venue's wifi is not a dependency.
 #   * No evaluation: evaluating the flake needs the nixpkgs/home-manager/
@@ -31,14 +31,20 @@
   ...
 }: let
   # Prebuilt artifacts baked into the image (see isoImage.storeContents below).
-  beelinkSystem = self.nixosConfigurations.beelink.config.system.build.toplevel;
-  beelinkDisko = self.nixosConfigurations.beelink.config.system.build.diskoScript;
+  #
+  # optiplex2 is the reference kiosk: it is the only live host provisioned with
+  # disko from the start, so it has both of the build outputs this needs and no
+  # per-machine hardware.nix to carry onto different hardware. Whichever host is
+  # named here is the one a stick installs — this is a *build-time* reference,
+  # so getting it wrong fails `nix build .#installer` rather than eval.
+  kioskSystem = self.nixosConfigurations.optiplex2.config.system.build.toplevel;
+  kioskDisko = self.nixosConfigurations.optiplex2.config.system.build.diskoScript;
 
   installKiosk = pkgs.writeShellApplication {
     name = "install-kiosk";
     runtimeInputs = [pkgs.util-linux];
     text = ''
-      echo "Installs the Beelink kiosk onto the disk declared in its config"
+      echo "Installs the kiosk system image onto the disk declared in its config"
       echo "(myConfig.diskDevice). EVERYTHING ON THAT DISK WILL BE ERASED."
       echo
       lsblk -o NAME,SIZE,TYPE,TRAN,MODEL
@@ -50,10 +56,10 @@
       fi
 
       echo "==> partitioning, formatting and mounting"
-      ${beelinkDisko}
+      ${kioskDisko}
 
       echo "==> installing from the USB (no network, no evaluation)"
-      nixos-install --root /mnt --system ${beelinkSystem} --no-root-password
+      nixos-install --root /mnt --system ${kioskSystem} --no-root-password
 
       echo
       echo "Done. Reboot and remove the USB stick."
@@ -68,8 +74,8 @@ in {
   # storeContents is a list option, so this appends to the installer's own
   # entry rather than replacing it.
   isoImage.storeContents = [
-    beelinkSystem
-    beelinkDisko
+    kioskSystem
+    kioskDisko
   ];
 
   # Default is "zstd -Xcompression-level 19", which takes far too long over a
