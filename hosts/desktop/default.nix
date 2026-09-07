@@ -78,6 +78,24 @@
   myConfig.networking.enableManager = true;
   myConfig.networking.openTCPPorts = [25565];
 
+  # The USB ethernet adapter that shares this machine's internet with the kiosk
+  # bench. NetworkManager's `shared` mode (the `usb-ethernet-share` connection)
+  # runs a dnsmasq on it handing out 10.42.0.0/24 leases, so the interface needs
+  # DHCP (UDP 67) and DNS (53, both protocols) open — the default-deny firewall
+  # otherwise drops the requests and the kiosks never get an address.
+  #
+  # Host-specific on purpose: this is one adapter on one machine, and the name is
+  # its physical USB path. It lived in modules/services/networking.nix keyed off
+  # enableManager, which meant every NetworkManager host — both kiosks and the
+  # laptop — carried a firewall rule for an interface that does not exist there.
+  #
+  # The name changes if it is moved to a different USB port. Check with
+  # `ip -o link` while it is plugged in.
+  networking.firewall.interfaces."enp45s0f3u2u2c2" = {
+    allowedUDPPorts = [53 67];
+    allowedTCPPorts = [53];
+  };
+
   # Tailscale, so this machine can reach the kiosks by MagicDNS name instead of
   # whatever address DHCP handed them. `just deploy <host>` and `just
   # kiosk-deploy <dir> <game> <host>` both use the host argument as an SSH name,

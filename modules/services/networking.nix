@@ -21,12 +21,6 @@ with lib; {
   config = mkMerge [
     (mkIf config.myConfig.networking.enableManager {
       networking.networkmanager.enable = true;
-
-      # Allow NetworkManager's DHCP and DNS services for Ethernet sharing.
-      networking.firewall.interfaces."enp45s0f3u2u2c2" = {
-        allowedUDPPorts = [53 67];
-        allowedTCPPorts = [53];
-      };
     })
 
     # The firewall is enabled by default; this only opens the listed ports.
