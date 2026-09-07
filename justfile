@@ -38,13 +38,16 @@ default:
 
 # ─── Core ─────────────────────────────────────────────────────────────────────
 
-# Format every Nix file with the flake's formatter (alejandra).
-#
 # The `.` is required. Older Nix passed the current directory to the formatter
 # implicitly; 2.34 passes nothing, so a bare `nix fmt` hands alejandra no paths
 # and it reads stdin instead — failing with "unexpected end of file" having
 # formatted nothing. That silently broke `ci` and `verify`, which depend on it.
+#
+# [doc] rather than a leading comment: `just --list` shows only the LAST
+# contiguous comment line above a recipe, which would make the sentence above
+# the description.
 [group('core')]
+[doc("Format every Nix file with the flake's formatter (alejandra).")]
 fmt:
     nix fmt .
 
@@ -148,9 +151,9 @@ status:
     @echo
     git diff --stat
 
-# Open a PR from the current branch into the given base (default: main).
 # --repo is set because origin is an SSH host alias gh cannot auto-resolve.
 [group('git')]
+[doc("Open a PR from the current branch into the given base (default: main).")]
 pr base="main":
     gh pr create --repo {{ repo }} --base {{ base }} --head $(git branch --show-current) --fill
 
@@ -238,11 +241,11 @@ clean:
 
 # ─── Installer image ──────────────────────────────────────────────────────────
 
-# Build the bootable USB installer carrying this flake (see hosts/installer).
 # Write it with:
 #   sudo dd if=result/iso/*.iso of=/dev/sdX bs=4M status=progress conv=fsync
 # Check the device with `lsblk` first — dd to the wrong one erases that disk.
 [group('installer')]
+[doc("Build the bootable USB installer carrying this flake (see hosts/installer).")]
 iso:
     nix build .#installer
 
@@ -282,11 +285,14 @@ deploy-build host:
 # .sops.yaml: it cannot decrypt withrin_password, so withrin has no password to
 # sudo with and plain `deploy` fails.
 #
-# Only works while the box still carries the bootstrap root key — the installer
-# ISO installs it, and the first plain `deploy` removes it (see
-# myConfig.kiosk.rootBootstrapKeys). So: one deploy-root, then switch back to
-# `deploy` permanently. A box that has drifted out of that flow has neither
-# route in and needs `--ask-sudo-password` from its `work` session.
+# Only works while the box still carries the bootstrap root key, which the
+# installer ISO puts there. This recipe activates the *flake's* config for the
+# host, where myConfig.kiosk.rootBootstrapKeys is false — so this deploy is
+# itself what removes the root key, in the same activation that gives withrin a
+# password. It is a one-shot: run it once, then use `deploy` forever after.
+#
+# A box that has drifted out of that flow has neither route in and needs
+# `--ask-sudo-password` from its `work` session.
 #
 # `target` defaults to `host` but can be given separately, because a box that has
 # not joined the tailnet yet has no MagicDNS name — pass its IP:
@@ -479,11 +485,16 @@ run-local-win: hov-prep-win
     set -euo pipefail
     # Pin the kiosk's exact wine instead of trusting PATH — same reasoning as
     # run-local's nix-ld library set, and the same package kiosk.nix installs.
-    # gaming.nix puts a 32-bit-only `wine` in the desktop profile, so a
-    # presence check (`command -v wine`) picks a wine that cannot load this
-    # 64-bit exe at all and dies with "Bad EXE format". The `full` variant is
-    # also the only one built with SDL/udev, so gamepads behave here the way
-    # they do on a kiosk — which is the entire point of this recipe.
+    #
+    # PATH cannot supply it. gaming.nix deliberately ships no bare `wine`
+    # (it used to be the 32-bit pkgs.wine, which died with "Bad EXE format" on
+    # 64-bit builds), and the wineWow64Packages.full it does install goes to
+    # Lutris's runners directory rather than PATH. So `command -v wine` finds
+    # nothing usable here, by design.
+    #
+    # `full` is also the only variant built with SDL/udev, so gamepads behave
+    # here the way they do on a kiosk — which is the entire point of this
+    # recipe.
     wine=$(nix build --no-link --print-out-paths \
       .#nixosConfigurations.optiplex.pkgs.wineWow64Packages.full)
     export PATH="$wine/bin:$PATH"
@@ -563,21 +574,29 @@ kiosk-status host:
 # is no partial state left to reason about.
 #
 # Over root rather than `sudo`, matching `deploy-root`. withrin's sudo on the
-# kiosks is password-protected, which needed `ssh -t` and a human at the
-# keyboard — so these could not be scripted or chained after a deploy. Root is
-# key-only (PermitRootLogin prohibit-password) and already authorized on every
-# kiosk by hosts/kiosk-common.nix, so this grants nothing that `just deploy-root`
-# did not already have.
+# kiosks is password-protected, so `ssh -t` and a human at the keyboard are
+# needed: these prompt, and cannot be chained after a deploy unattended.
+#
+# They used to go in as root, which was passwordless and scriptable. That route
+# is gone on purpose — root is authorized only while a box is un-adopted (see
+# myConfig.kiosk.rootBootstrapKeys), so `ssh root@<kiosk>` now fails on every
+# normal kiosk. Typing a password is the cost of not leaving a passwordless root
+# door open on a machine that sits unattended at a venue.
+#
+# The passwordless path already exists and is the right one for on-site use: the
+# booth dashboard drives the restricted booth-control dispatcher, which has a
+# NOPASSWD rule scoped to exactly these commands (hosts/kiosk-common.nix). It
+# needs `boothAdminPublicKey` set there before it works.
 
-# Restart the kiosk session to pick up a freshly deployed build.
+# Restart the kiosk session to pick up a freshly deployed build (prompts for sudo).
 [group('kiosk')]
 kiosk-restart host:
-    ssh root@{{ host }} 'loginctl terminate-user kiosk'
+    ssh -t withrin@{{ host }} 'sudo loginctl terminate-user kiosk'
 
-# Reboot a kiosk host to pick up a freshly deployed build.
+# Reboot a kiosk host to pick up a freshly deployed build (prompts for sudo).
 [group('kiosk')]
 kiosk-reboot host:
-    ssh root@{{ host }} reboot
+    ssh -t withrin@{{ host }} 'sudo systemctl reboot'
 
 # Tail the kiosk launcher's logs on a host.
 [group('kiosk')]
