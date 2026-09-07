@@ -41,8 +41,9 @@
   # extendModules, not the host as-is: a just-installed box has no password for
   # withrin (its host key is not a sops recipient yet), so the first deploy has
   # to go in as root. The installed system therefore carries the bootstrap root
-  # key; the flake's own optiplex2 does not, so the first ordinary `just deploy`
-  # removes it again. See myConfig.kiosk.rootBootstrapKeys.
+  # key; the flake's own optiplex2 does not, so `just deploy-root` — which
+  # activates that flake config — removes the key in the very activation it uses
+  # it for. See myConfig.kiosk.rootBootstrapKeys.
   kioskInstall = self.nixosConfigurations.optiplex2.extendModules {
     modules = [{myConfig.kiosk.rootBootstrapKeys = true;}];
   };

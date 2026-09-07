@@ -181,15 +181,21 @@ needs. `just deploy-root` goes in as root instead and sidesteps it.
 Root SSH is not left open for that. `myConfig.kiosk.rootBootstrapKeys` gates it
 and defaults to **off**; the installer ISO turns it on for the system it writes
 (`hosts/installer/default.nix` uses `extendModules`), so a box installed from a
-stick has the door open and the flake's own config does not. The first ordinary
-`just deploy` therefore closes it, with nothing to remember:
+stick has the door open and the flake's own config does not.
+
+The bootstrap deploy is therefore self-closing. `just deploy-root` activates the
+*flake's* config for that host — the one with the flag off — so that single
+activation both gives `withrin` a password and removes the root key it just came
+in through. There is nothing to remember and no second step that must not be
+forgotten:
 
 ```bash
 ssh withrin@<host> 'cat /etc/ssh/ssh_host_ed25519_key.pub' | ssh-to-age
 # → add to .sops.yaml, then:
 sops updatekeys secrets/secrets.yaml
-just deploy-root <host>        # root; lands the re-keyed secrets
-just deploy <host>             # withrin+sudo; drops the bootstrap root key
+just deploy-root <host>        # one-shot: lands the re-keyed secrets AND
+                               # removes its own root key in the same activation
+just deploy <host>             # from here on; confirms withrin+sudo works
 ```
 
 **It does not trust unsigned paths.** `nixos-rebuild --target-host` builds
@@ -217,9 +223,9 @@ libraries in `programs.nix-ld.libraries`. Any other non-Nix binary dropped into
 
 ## Installer USB
 
-`hosts/installer/default.nix` builds a NixOS installer image with this flake
-already on it, so a machine that has never been set up needs no clone, no
-network and no credentials to install from:
+`hosts/installer/default.nix` builds an installer image carrying a **complete
+prebuilt kiosk**, so a machine that has never been set up needs no clone, no
+network and no credentials:
 
 ```bash
 just iso                     # -> result/iso/nixos-installer-withrin.iso
@@ -227,10 +233,55 @@ lsblk                        # confirm the target device first
 sudo dd if=result/iso/*.iso of=/dev/sdX bs=4M status=progress conv=fsync
 ```
 
-The flake lands at `/etc/nix-config` on the booted image, and your SSH key is
-authorized for root so a headless box can be installed from the desktop.
+Boot the stick on the target and run **one command**:
 
-Partition, format, mount, then install the host by name:
+```bash
+install-kiosk
+```
+
+It lists the disks, makes you type `ERASE`, then partitions, formats and
+installs onto the disk the config names (`myConfig.diskDevice`). This is the
+normal path — prefer it over anything below.
+
+Nothing is fetched and nothing is evaluated, which is the whole point:
+
+- **No network.** A venue's wifi is not a dependency.
+- **No evaluation.** Evaluating the flake needs the nixpkgs / home-manager /
+  sops-nix sources, and those are *not* on the image — only `flake.nix` and
+  `flake.lock` are. `nixos-install --flake` would try to fetch them.
+- **No RAM blowup.** The live installer's `/nix/store` is a tmpfs overlay, so
+  substituting the ~13.5 GiB kiosk closure into it OOM-kills the machine.
+  Streaming it out of the ISO's squashfs does not.
+
+What it installs is `optiplex2`, extended with
+`myConfig.kiosk.rootBootstrapKeys = true` — so the box comes up reachable as
+root for its one bootstrap deploy (see [Bootstrapping a new
+kiosk](#bootstrapping-a-new-kiosk)).
+
+The flake source is still mounted at `/etc/nix-config` for reference and
+post-install work, and your desktop's SSH key is authorized for root on the
+*live installer*, so a headless box can be driven from the desktop.
+
+The image is a **snapshot** of the flake at build time — rebuild it whenever the
+config it should install has changed.
+
+### Fallback: installing something other than the baked kiosk
+
+`install-kiosk` installs one host onto one disk. A different host, or the same
+host onto a different disk, means evaluating the flake — which needs network.
+
+For a disko host (`modules/disk/kiosk.nix`), it is still one command:
+
+```bash
+lsblk                        # confirm the device first
+disko-install --flake /etc/nix-config#optiplex2 --disk main /dev/sda
+```
+
+`--disk main <device>` overrides `myConfig.diskDevice`, so the same config
+installs onto whatever disk the replacement hardware presents. `disko-install`
+is on the ISO for exactly this.
+
+For a host that is *not* disko-managed, partition by hand first:
 
 ```bash
 parted /dev/sda -- mklabel gpt
@@ -245,25 +296,6 @@ mkdir -p /mnt/boot && mount /dev/disk/by-label/boot /mnt/boot
 
 nixos-install --flake /etc/nix-config#optiplex
 ```
-
-The image is a **snapshot** of the flake at build time — rebuild it whenever the
-config it should install has changed.
-
-### Disko hosts install in one command
-
-Hosts that import `modules/disk/kiosk.nix` declare their own partitioning with
-[disko](https://github.com/nix-community/disko), so the whole block above
-collapses to:
-
-```bash
-lsblk                        # confirm the device first
-disko-install --flake /etc/nix-config#optiplex2 --disk main /dev/sda
-```
-
-That partitions, formats, mounts and installs. `--disk main <device>` overrides
-`myConfig.diskDevice`, so the same config installs onto whatever disk the
-replacement hardware presents. `disko-install` is baked into the ISO because
-the image has to work without network.
 
 The shared kiosk layout is GPT: a 1 GiB ESP at `/boot`, an 8 GiB swap
 partition, and ext4 root taking the rest. Filesystems resolve by partition
@@ -306,8 +338,12 @@ box could not be deployed to from anywhere else.
 
 ## Flatpak
 
-`modules/services/flatpak.nix` enables Flatpak and the KDE XDG desktop portal.
-It is deliberately an escape hatch, not the default way to install anything:
+`modules/services/flatpak.nix` enables Flatpak and nothing else — the XDG
+desktop portal it needs comes from Plasma, which sets `xdg.portal.enable`, both
+portal backends and the portal preference file on every host that imports
+`modules/services/desktop.nix`.
+
+Flatpak is deliberately an escape hatch, not the default way to install anything:
 declared packages belong in a `profiles/home/*` profile so they are reproducible
 and roll back with the generation. Flatpak covers what nixpkgs does not have, or
 what needs a vendor build.

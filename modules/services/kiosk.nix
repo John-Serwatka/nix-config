@@ -177,11 +177,14 @@ in {
         if root has a key.
 
         This is strictly more access than withrin's own key, which is why it is
-        off by default: withrin's sudo is password-gated, root's SSH is not. The
-        installer ISO turns it on for the system it installs
-        (hosts/installer/default.nix), so a fresh box has the door open and the
-        first ordinary `just deploy` — with the flag back at its default — closes
-        it. Nothing has to be remembered.
+        off by default: withrin's sudo is password-gated, root's SSH is not.
+
+        The installer ISO turns it on for the system it installs
+        (hosts/installer/default.nix), so a fresh box has the door open. The
+        bootstrap deploy then closes it by itself: `just deploy-root` activates
+        the host's *flake* config, where this option is back at its default, so
+        that one activation both gives withrin a password and drops the root key
+        it arrived through. Nothing has to be remembered.
 
         Turn it on by hand only to recover a box that has drifted out of that
         flow, and turn it off in the same session.
