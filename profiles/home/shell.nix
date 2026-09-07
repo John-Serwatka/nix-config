@@ -15,9 +15,6 @@
       gs = "git status";
       gd = "git diff";
       gl = "git log --oneline --graph --decorate";
-
-      # Rebuild this flake for the current host.
-      rebuild = "sudo nixos-rebuild switch --flake ~/nix-config";
     };
   };
 
@@ -40,4 +37,11 @@
   # `nvim` from here pointed that account at a binary it never installed.
   # Whichever profile installs the editor owns EDITOR (see programs.neovim.
   # defaultEditor in profiles/home/dev.nix and users/withrin/home-kiosk.nix).
+  #
+  # No `rebuild` alias either, for the same reason. It used to be
+  # `sudo nixos-rebuild switch --flake ~/nix-config`, which assumed a clone at a
+  # fixed path that only exists for withrin on the desktop and laptop — not for
+  # booth-admin, and not on the kiosks, which are deployed to rather than built
+  # on. `just rebuild` is the real entrypoint: it runs from the repo it is in and
+  # names the host explicitly.
 }
