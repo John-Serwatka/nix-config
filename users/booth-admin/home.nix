@@ -51,7 +51,6 @@
       # `ssh <host> <verb>` calls in it need no change.
       optiplex = common // {HostName = "optiplex.local";};
       optiplex2 = common // {HostName = "optiplex2.local";};
-      beelink = common // {HostName = "beelink.local";};
     };
   };
 }

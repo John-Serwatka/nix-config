@@ -105,13 +105,6 @@
         modules = [./hosts/optiplex2/default.nix];
       };
 
-      beelink = mkHost {
-        hostname = "beelink";
-        users = ["withrin"];
-        homeProfile = "home-kiosk";
-        modules = [./hosts/beelink/default.nix];
-      };
-
       # Bootable USB installer carrying this flake (hosts/installer). Not built
       # with mkHost: it has no users of its own, no Home Manager and no secrets
       # — the installation-cd profile supplies its accounts. `self` is passed so

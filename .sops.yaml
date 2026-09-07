@@ -11,7 +11,6 @@ keys:
   # by hand on a fresh install. Get a new box's key with:
   #   ssh withrin@<host> 'cat /etc/ssh/ssh_host_ed25519_key.pub' | ssh-to-age
   - &optiplex_host age12pa54mmpftjjhcsfljunykgclun36ynky8pwvjlw7m668rr9ddqsnnvec3
-  - &beelink_host age13z3c972fczjhcgj2vxfm8j6rp84ghfynfdwpgxmfa39vuah3fccq8ujaa7
   # optiplex2, installed 2026-08-13 via disko. Note this key is generated at
   # install time — reinstalling the box invalidates this line and it has to be
   # re-derived and `sops updatekeys` re-run.
@@ -23,5 +22,4 @@ creation_rules:
           - *desktop
           - *laptop
           - *optiplex_host
-          - *beelink_host
           - *optiplex2_host

@@ -16,7 +16,7 @@
 
       # Every kiosk must be listed here AND have a matching Host block in
       # ../home.nix, or it silently never appears on the dashboard.
-      HOSTS=(optiplex optiplex2 beelink)
+      HOSTS=(optiplex optiplex2)
       SELECTED="''${HOSTS[0]}"
       REFRESH=5 # seconds between idle auto-refreshes
 
