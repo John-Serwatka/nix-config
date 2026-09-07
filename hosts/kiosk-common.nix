@@ -9,7 +9,12 @@
   lib,
   pkgs,
   ...
-}: let
+}:
+with lib; let
+  # Workstation public keys, shared with hosts/installer/default.nix so the two
+  # copies cannot drift.
+  sshKeys = import ../lib/ssh-keys.nix;
+
   # The booth-admin dashboard's public key (generated one-time on the laptop:
   # ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519_booth_control). Left null until
   # then — that yields an EMPTY authorizedKeys list below (see lib.optional), so
@@ -106,24 +111,21 @@ in {
       KbdInteractiveAuthentication = false;
     };
   };
-  users.users.withrin.openssh.authorizedKeys.keys = [
-    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINx1ujbVZk2s/RRjVfqLOyNS4HfV1vTNLLivpFIqP0YI withrin@desktop"
-    # Laptop (~/.ssh/id_ed25519) so it can SSH in and drive `just deploy` /
-    # `just kiosk-deploy` against the kiosks, over the tailnet or the LAN.
-    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIM1Dul40V/Z3WrED3DXnZY9TDhIWMu0HQz/7n/fsH/0u withrin@laptop"
-  ];
+  # Both workstations, so either can drive `just deploy` / `just kiosk-deploy`
+  # against a kiosk over the tailnet or the LAN.
+  users.users.withrin.openssh.authorizedKeys.keys = attrValues sshKeys;
 
-  # Bootstrap path for a freshly imaged box. Until its new SSH host key is added
-  # to .sops.yaml, sops cannot decrypt withrin_password — so withrin has no
-  # password and cannot sudo, which is exactly what `just deploy` needs. Deploying
-  # as root sidesteps that; use `just deploy-root <host>` until the box is adopted.
-  # Grants nothing new: withrin is already wheel and a trusted Nix user here (see
-  # nix.settings.trusted-users below). PermitRootLogin defaults to
-  # prohibit-password, so this stays key-only.
-  users.users.root.openssh.authorizedKeys.keys = [
-    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINx1ujbVZk2s/RRjVfqLOyNS4HfV1vTNLLivpFIqP0YI withrin@desktop"
-    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIM1Dul40V/Z3WrED3DXnZY9TDhIWMu0HQz/7n/fsH/0u withrin@laptop"
-  ];
+  # Root over SSH is the *bootstrap* path only, and it is off unless a host asks
+  # for it — see myConfig.kiosk.rootBootstrapKeys in modules/services/kiosk.nix
+  # for the full lifecycle. It is not equivalent to withrin's key above: withrin
+  # has to sudo with a password, root does not, so leaving this on permanently
+  # would be a passwordless root door on every kiosk for the sake of a step that
+  # happens once per machine.
+  #
+  # PermitRootLogin defaults to prohibit-password, so this stays key-only either
+  # way; an empty list here means sshd simply has no root key to match.
+  users.users.root.openssh.authorizedKeys.keys =
+    optionals config.myConfig.kiosk.rootBootstrapKeys (attrValues sshKeys);
 
   # Two ways in, and a kiosk keeps whichever it can get:
   #

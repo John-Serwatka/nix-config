@@ -170,14 +170,33 @@ Check with `just kiosk-logs <host>`.
 
 ### Bootstrapping a new kiosk
 
-`nixos-rebuild --target-host` builds locally, so the paths it pushes are
-unsigned, and only a trusted user may add unsigned paths to a store. Root is
-trusted by default but cannot log in over SSH here (no key,
-`PermitRootLogin prohibit-password`), so `hosts/kiosk-common.nix` adds the
-primary user to `nix.settings.trusted-users`.
+A just-installed kiosk cannot be reached by `just deploy` yet, for two separate
+reasons that both have to be cleared once.
 
-That setting cannot install itself remotely. Each new kiosk needs **one** local
-rebuild on the box before `just deploy` works against it:
+**It has no password.** Its SSH host key is not an age recipient in `.sops.yaml`
+until you add it, so sops cannot decrypt `withrin_password`, so `withrin` has no
+password, so `withrin` cannot `sudo` — which is exactly what `just deploy`
+needs. `just deploy-root` goes in as root instead and sidesteps it.
+
+Root SSH is not left open for that. `myConfig.kiosk.rootBootstrapKeys` gates it
+and defaults to **off**; the installer ISO turns it on for the system it writes
+(`hosts/installer/default.nix` uses `extendModules`), so a box installed from a
+stick has the door open and the flake's own config does not. The first ordinary
+`just deploy` therefore closes it, with nothing to remember:
+
+```bash
+ssh withrin@<host> 'cat /etc/ssh/ssh_host_ed25519_key.pub' | ssh-to-age
+# → add to .sops.yaml, then:
+sops updatekeys secrets/secrets.yaml
+just deploy-root <host>        # root; lands the re-keyed secrets
+just deploy <host>             # withrin+sudo; drops the bootstrap root key
+```
+
+**It does not trust unsigned paths.** `nixos-rebuild --target-host` builds
+locally, so the paths it pushes are unsigned, and only a trusted user may add
+unsigned paths to a store. `hosts/kiosk-common.nix` puts the primary user in
+`nix.settings.trusted-users`, but that setting cannot install itself remotely —
+so a box that did *not* come from the ISO needs one local rebuild first:
 
 ```bash
 sudo nixos-rebuild switch --flake .#<host>

@@ -164,6 +164,30 @@ in {
       '';
     };
 
+    rootBootstrapKeys = mkOption {
+      type = types.bool;
+      default = false;
+      description = ''
+        Authorize the deploy workstations' SSH keys for **root** on this box.
+
+        Needed only while a freshly imaged kiosk is un-adopted: its new host key
+        is not yet a recipient in .sops.yaml, so sops cannot decrypt
+        `withrin_password`, so withrin has no password, so withrin cannot sudo —
+        and `just deploy` needs sudo. `just deploy-root` sidesteps that, but only
+        if root has a key.
+
+        This is strictly more access than withrin's own key, which is why it is
+        off by default: withrin's sudo is password-gated, root's SSH is not. The
+        installer ISO turns it on for the system it installs
+        (hosts/installer/default.nix), so a fresh box has the door open and the
+        first ordinary `just deploy` — with the flag back at its default — closes
+        it. Nothing has to be remembered.
+
+        Turn it on by hand only to recover a box that has drifted out of that
+        flow, and turn it off in the same session.
+      '';
+    };
+
     user = mkOption {
       type = types.str;
       default = "kiosk";

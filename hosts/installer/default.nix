@@ -37,8 +37,17 @@
   # per-machine hardware.nix to carry onto different hardware. Whichever host is
   # named here is the one a stick installs — this is a *build-time* reference,
   # so getting it wrong fails `nix build .#installer` rather than eval.
-  kioskSystem = self.nixosConfigurations.optiplex2.config.system.build.toplevel;
-  kioskDisko = self.nixosConfigurations.optiplex2.config.system.build.diskoScript;
+  #
+  # extendModules, not the host as-is: a just-installed box has no password for
+  # withrin (its host key is not a sops recipient yet), so the first deploy has
+  # to go in as root. The installed system therefore carries the bootstrap root
+  # key; the flake's own optiplex2 does not, so the first ordinary `just deploy`
+  # removes it again. See myConfig.kiosk.rootBootstrapKeys.
+  kioskInstall = self.nixosConfigurations.optiplex2.extendModules {
+    modules = [{myConfig.kiosk.rootBootstrapKeys = true;}];
+  };
+  kioskSystem = kioskInstall.config.system.build.toplevel;
+  kioskDisko = kioskInstall.config.system.build.diskoScript;
 
   installKiosk = pkgs.writeShellApplication {
     name = "install-kiosk";
@@ -117,11 +126,11 @@ in {
   # Headless installs: the kiosks are usually on a bench with no keyboard, so
   # allow driving the install over SSH from the desktop. installation-device.nix
   # already enables sshd with PermitRootLogin = yes and blank passwords, but
-  # blank passwords cannot authenticate over SSH — hence the key.
-  # NOTE: same key as hosts/kiosk-common.nix; worth factoring out if a third
-  # copy ever appears.
+  # blank passwords cannot authenticate over SSH — hence the key. This is the
+  # live *installer*, not the installed system; the latter gets its keys from
+  # myConfig.kiosk.rootBootstrapKeys above.
   users.users.root.openssh.authorizedKeys.keys = [
-    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINx1ujbVZk2s/RRjVfqLOyNS4HfV1vTNLLivpFIqP0YI withrin@desktop"
+    (import ../../lib/ssh-keys.nix).desktop
   ];
 
   # Wired DHCP is what the kiosk bench has; NetworkManager (from

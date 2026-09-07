@@ -280,7 +280,13 @@ deploy-build host:
 
 # For a freshly imaged box whose SSH host key is not yet an age recipient in
 # .sops.yaml: it cannot decrypt withrin_password, so withrin has no password to
-# sudo with and plain `deploy` fails. Switch back to `deploy` once adopted.
+# sudo with and plain `deploy` fails.
+#
+# Only works while the box still carries the bootstrap root key — the installer
+# ISO installs it, and the first plain `deploy` removes it (see
+# myConfig.kiosk.rootBootstrapKeys). So: one deploy-root, then switch back to
+# `deploy` permanently. A box that has drifted out of that flow has neither
+# route in and needs `--ask-sudo-password` from its `work` session.
 #
 # `target` defaults to `host` but can be given separately, because a box that has
 # not joined the tailnet yet has no MagicDNS name — pass its IP:
