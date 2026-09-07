@@ -63,17 +63,22 @@ in {
 
             Service = {
               Type = "simple";
-              # Paths are shell-quoted so mount points with spaces survive
-              # systemd's ExecStart word splitting.
+              # Every argument is shell-quoted so paths with spaces survive
+              # systemd's ExecStart word splitting — extraArgs included, since
+              # its own default interpolates the home directory into
+              # --config=. Only the binary is left bare: systemd wants the
+              # command itself as a plain absolute path.
               ExecStartPre = "${pkgs.coreutils}/bin/mkdir -p ${lib.escapeShellArg mountCfg.mountPoint}";
-              ExecStart = lib.concatStringsSep " " ([
-                  "${pkgs.rclone}/bin/rclone"
-                  "mount"
-                  (lib.escapeShellArg mountCfg.remote)
-                  (lib.escapeShellArg mountCfg.mountPoint)
-                  "--daemon-timeout=30s"
-                ]
-                ++ mountCfg.extraArgs);
+              ExecStart = lib.concatStringsSep " " (
+                ["${pkgs.rclone}/bin/rclone"]
+                ++ map lib.escapeShellArg ([
+                    "mount"
+                    mountCfg.remote
+                    mountCfg.mountPoint
+                    "--daemon-timeout=30s"
+                  ]
+                  ++ mountCfg.extraArgs)
+              );
               ExecStop = "${pkgs.fuse3}/bin/fusermount3 -u ${lib.escapeShellArg mountCfg.mountPoint}";
               Restart = "on-failure";
               RestartSec = "10";
