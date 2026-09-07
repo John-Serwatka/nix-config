@@ -26,16 +26,33 @@
   programs.chromium = {
     enable = true;
     enablePlasmaBrowserIntegration = true;
-    # Force-installed, so users cannot remove it. This is the MV2 uBlock
-    # Origin ID, which is delisted from the Chrome Web Store — Brave still
-    # carries MV2, but confirm it actually installs on chromium before
-    # relying on it. The MV3 replacement is uBlock Origin Lite,
-    # ddkjiahejlhfcafbddmgiahcphecmpfh.
-    extensions = [
-      "cjpalhdlnbpafiamejdnhcphjbkeiagm" # uBlock Origin
-    ];
+
+    # `extensions` deliberately left unset — see the per-browser forcelist below.
+    # This option feeds one shared ExtensionInstallForcelist into the managed
+    # policies of chromium, google-chrome *and* brave, which is the wrong shape
+    # here: the two installed browsers want different content blocking.
   };
   nixpkgs.config.chromium.enableWideVine = true;
+
+  # Content blocking, per browser rather than per policy-module.
+  #
+  # Chromium gets uBlock Origin **Lite** (MV3). The MV2 uBlock Origin ID
+  # cjpalhdlnbpafiamejdnhcphjbkeiagm used to be forced here and cannot work any
+  # more: it is delisted from the Chrome Web Store, so the forcelist has nothing
+  # to fetch, and Chromium has wound MV2 down regardless. A forcelist entry that
+  # cannot resolve fails quietly — the browser simply has no blocker.
+  #
+  # Brave is left alone on purpose. Shields is built in and on by default, and
+  # stacking a second blocker on top of it is what Brave itself advises against.
+  #
+  # Written straight to Chromium's own policy directory instead of through
+  # programs.chromium.extensions, because that option cannot target one browser:
+  # Chromium merges every *.json under /etc/chromium/policies/managed/, and
+  # nothing under it reaches /etc/brave/.
+  environment.etc."chromium/policies/managed/content-blocking.json".text = builtins.toJSON {
+    # uBlock Origin Lite. No update URL: a bare ID means the Chrome Web Store.
+    ExtensionInstallForcelist = ["ddkjiahejlhfcafbddmgiahcphecmpfh"];
+  };
 
   # Native Wayland for the Chromium family — and for every other nixpkgs
   # Electron app on the system, not just the browsers here.
