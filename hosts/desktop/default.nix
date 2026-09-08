@@ -23,6 +23,7 @@
     ../../modules/services/flatpak.nix
     ../../modules/services/ollama.nix
     ../../modules/services/networking.nix
+    ../../modules/services/kdeconect.nix
     ../../modules/services/homelab.nix
 
     # Hardware
