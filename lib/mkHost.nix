@@ -36,7 +36,7 @@ nixpkgs.lib.nixosSystem {
       # Inert unless a host sets disko.devices (see modules/disk/kiosk.nix), so
       # this costs the desktop and laptop nothing.
       disko.nixosModules.disko
-      {
+      ({pkgs, ...}: {
         # Overrides the mkDefault in each host's generated hardware.nix
         # (same value today; mkHost stays the single source of truth).
         nixpkgs.hostPlatform = system;
@@ -46,8 +46,16 @@ nixpkgs.lib.nixosSystem {
 
         home-manager.useGlobalPkgs = true;
         home-manager.useUserPackages = true;
-        # Back up clobbered dotfiles instead of failing activation on them.
-        home-manager.backupFileExtension = "hm-bak";
+        # Desktop apps can replace managed symlinks with writable files. Keep
+        # the latest displaced file at .hm-bak and number older backups so a
+        # second activation neither fails nor discards the previous backup.
+        home-manager.backupCommand = nixpkgs.lib.getExe (pkgs.writeShellApplication {
+          name = "home-manager-backup";
+          runtimeInputs = [pkgs.coreutils];
+          text = ''
+            mv --backup=numbered --no-target-directory -- "$1" "$1.hm-bak"
+          '';
+        });
         home-manager.users =
           nixpkgs.lib.genAttrs users
           (user: {
@@ -58,6 +66,6 @@ nixpkgs.lib.nixosSystem {
             home.username = user;
             home.homeDirectory = "/home/${user}";
           });
-      }
+      })
     ];
 }

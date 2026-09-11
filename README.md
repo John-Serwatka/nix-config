@@ -29,6 +29,18 @@ To add a user:
 2. Add `<name>` to the host's `users = [ ... ]` in `flake.nix`.
 3. Rebuild.
 
+Home Manager preserves conflicting local files as `<file>.hm-bak`. If that
+backup already exists, it keeps the older copy as `<file>.hm-bak.~1~`, then
+`~2~`, and so on, so a desktop app replacing a managed file between rebuilds
+neither fails activation nor overwrites an earlier backup.
+
+`mimeapps.list` is the exception: it is declared with `force = true`, so
+activation overwrites it instead of backing it up. Plasma rewrites that file
+every time "Open with → always" is used, which would otherwise leave a fresh
+numbered backup behind on every rebuild. The trade is that a default changed
+in the Plasma UI is reverted on the next rebuild — change it in
+`users/withrin/home.nix` instead.
+
 ## Package ownership
 
 Packages are split on ownership, not on convenience. Host-level needs — drivers,
@@ -42,6 +54,57 @@ That is what makes a second user cheap: `users/booth-admin/home.nix` imports
 and a usable prompt rather than withrin's nine profiles. A package a host needs
 whether or not anyone logs in belongs in a module; anything else belongs in a
 profile.
+
+## Plasma toolbar icons
+
+Plasma sometimes pins `/nix/store/.../share/applications/app.desktop` instead of
+the stable `applications:app.desktop` ID. Weekly garbage collection removes the
+old generation and leaves a blank icon, even though the app is still installed.
+
+Withrin's desktop and laptop profiles import `modules/home/plasma-launchers.nix`.
+It repairs these pins at login and whenever Plasma saves panel changes, preserving
+the pinned apps and their order. Rebuild with `just rebuild` to install it. For an
+existing session, run `plasma-fix-launchers` to repair immediately, or use
+`plasma-fix-launchers --dry-run` to preview. The command requires a running Plasma
+session and updates it without restarting the desktop. Each repair records the
+old and new launcher lists under `~/.local/state/plasma-launchers/`.
+
+The custom icons now sit on copies of the packages' native desktop entries, so
+URL/file arguments, window matching and Steam's menu actions survive upgrades.
+Godot has a stable `godot.desktop` alias; the repair also migrates versioned Mono
+Godot pins to it, and the engine's own versioned entry is hidden so only the
+alias shows in the application menu. `my.godot.package`, declared in
+`modules/home/godot.nix` and imported by both the dev profile that installs the
+engine and the shortcuts file that builds the alias, selects both. It currently
+selects `pkgs.godot_4_6-mono`; change that one selection when ready for 4.7 or
+4.8. Engine upgrades remain an explicit choice, while patch updates follow the
+lock.
+
+## Workstation defaults
+
+Firefox handles ordinary web links and HTML files on both workstations. The
+ChatGPT and Claude app windows retain their dedicated Brave launchers.
+
+The laptop also enables KDE Connect through its NixOS module, including the
+required TCP/UDP ports 1714–1764. After rebuilding, open KDE Connect Settings and
+pair with the phone app on the same network. Thunderbird is installed for the
+primary laptop user and handles email links and `.eml` files. Add mail accounts
+in Thunderbird; account credentials and profiles remain user-managed. These
+additions are scoped to `hosts/laptop/default.nix`.
+
+The old Google Drive rclone mount is disabled. Core's Nextcloud replaces it;
+existing rclone credentials, mount contents and local caches are not deleted.
+Nextcloud account sign-in and selection of folders to sync remain user settings.
+
+On the ASUS laptop, `asusd` selects **Performance on AC** and **Quiet on battery**,
+with CPU energy preferences set to performance and power saving respectively.
+The `asus-power-policy` system service sets these defaults at boot and when asusd
+restarts, then asusd handles unplugging, plugging in and power changes during
+suspend. The old login-time Balanced override and competing
+`power-profiles-daemon` are removed. Charge limits and custom fan settings remain
+in asusd's writable configuration. Use `asusctl profile get` after plugging or
+unplugging to verify the active profile; inspect failures with
+`journalctl -u asus-power-policy -u asusd -b`.
 
 ## Formatting
 
@@ -99,11 +162,25 @@ to stable `nixos-26.05` where this one tracks `nixos-unstable`. There is no
 `beelink` host here any more — output, `hosts/beelink/` and age recipient are
 all gone.
 
-What this repo still holds about `core` is only how the desktop reaches it, both
-pieces in `hosts/desktop/default.nix`: a `networking.hosts` entry, because
-`home.arpa` has no public DNS, **and** core's own Caddy root CA in
-`security.pki.certificates`, because core runs its own CA. Fixing only the first
-turns "cannot resolve" into "certificate error".
+Desktop and laptop access live in `modules/services/homelab.nix`. It installs the
+private Caddy CAs and resolves `core`, `dash.home.arpa` and `status.home.arpa`:
+the desktop uses core's LAN address (`192.168.0.125`), while the travelling laptop
+uses its Tailscale address (`100.109.198.88`). The laptop needs Tailscale connected
+even at home for these names. Recheck the tailnet address if core is removed and
+rejoined. Public service domains continue using public DNS.
+
+Use `ssh core` for the host's preferred route, `ssh core-remote` to force
+Tailscale, or `ssh core-lan` to force the LAN. All three default to the primary
+user and use SSH keepalives. `core-lan` is the way back in on the laptop when
+tailscaled is down or the network has no internet: there `core` is a tailnet
+address, and an unreachable 100.x hangs rather than failing. All three share
+core's single `known_hosts` entry via `HostKeyAlias`. Existing per-user Git
+hosts and SSH identities are preserved. Core
+must be online, permit SSH over Tailscale and authorize the workstation's public
+key (see `lib/ssh-keys.nix`); those server settings belong to core's own repo.
+The workstation changes do not enroll an unauthenticated machine: run
+`sudo tailscale up` once if needed. Validate with `tailscale ping core`,
+`ssh core-remote hostname`, and `https://dash.home.arpa` in Firefox.
 
 ### Remote access (Tailscale + LAN)
 

@@ -1,5 +1,76 @@
 # users/withrin/desktop-shortcuts.nix
-{pkgs, ...}: {
+{
+  config,
+  lib,
+  osConfig,
+  pkgs,
+  ...
+}: let
+  # Keep stable IDs for existing Plasma pins, but inherit each package's URL
+  # handlers, file arguments, window matching and desktop actions on upgrades.
+  #
+  # hideSource additionally shadows the package's own entry with a NoDisplay
+  # copy at the same ID, so the alias does not sit next to the original in the
+  # application menu. Existing pins on the original ID still launch.
+  nativeLaunchers = {
+    steam = {
+      package = osConfig.programs.steam.package;
+      icon = "steam";
+    };
+    spotify = {
+      package = pkgs.spotify;
+      icon = "spotify";
+    };
+    rider = {
+      package = pkgs.jetbrains.rider;
+      icon = "rider";
+    };
+    idea = {
+      package = pkgs.jetbrains.idea;
+      icon = "intellijidea";
+    };
+    aseprite = {
+      package = pkgs.aseprite;
+      icon = "aseprite";
+    };
+    discord = {
+      package = pkgs.vesktop;
+      sourceName = "vesktop";
+      icon = "discord";
+    };
+    godot = {
+      package = config.my.godot.package;
+      sourceName = "org.godotengine.Godot${lib.versions.majorMinor config.my.godot.package.version}-mono";
+      icon = "godot";
+      hideSource = true;
+    };
+  };
+  launchers =
+    pkgs.runCommand "workstation-launchers" {
+      nativeBuildInputs = [pkgs.desktop-file-utils];
+    } (lib.concatStringsSep "\n" (lib.mapAttrsToList (
+        name: entry: let
+          source = "${entry.package}/share/applications/${entry.sourceName or name}.desktop";
+        in
+          ''
+            install -Dm644 ${source} "$out/share/applications/${name}.desktop"
+            desktop-file-edit --set-icon=${entry.icon} "$out/share/applications/${name}.desktop"
+            desktop-file-validate "$out/share/applications/${name}.desktop"
+          ''
+          + lib.optionalString (entry.hideSource or false) ''
+            install -Dm644 ${source} "$out/share/applications/${entry.sourceName}.desktop"
+            desktop-file-edit --set-key=NoDisplay --set-value=true \
+              "$out/share/applications/${entry.sourceName}.desktop"
+            desktop-file-validate "$out/share/applications/${entry.sourceName}.desktop"
+          ''
+      )
+      nativeLaunchers));
+in {
+  # Declares my.godot.package, which the godot alias above is built from.
+  imports = [../../modules/home/godot.nix];
+
+  # These entries intentionally override the same IDs in the user profile.
+  home.packages = [(lib.hiPrio launchers)];
   #
   # Install icons
   #
@@ -56,68 +127,5 @@
     terminal = false;
     type = "Application";
     categories = ["Network" "Utility"];
-  };
-
-  xdg.desktopEntries.discord = {
-    name = "Discord";
-    exec = "vesktop";
-    icon = "discord";
-    terminal = false;
-    type = "Application";
-    categories = ["Network" "InstantMessaging"];
-  };
-
-  xdg.desktopEntries.spotify = {
-    name = "Spotify";
-    exec = "spotify";
-    icon = "spotify";
-    terminal = false;
-    type = "Application";
-    categories = ["Audio" "Music"];
-  };
-
-  xdg.desktopEntries.steam = {
-    name = "Steam";
-    exec = "steam";
-    icon = "steam";
-    terminal = false;
-    type = "Application";
-    categories = ["Game"];
-  };
-
-  xdg.desktopEntries.godot = {
-    name = "Godot";
-    exec = "godot4";
-    icon = "godot";
-    terminal = false;
-    type = "Application";
-    categories = ["Development"];
-  };
-
-  xdg.desktopEntries.rider = {
-    name = "JetBrains Rider";
-    exec = "rider";
-    icon = "rider";
-    terminal = false;
-    type = "Application";
-    categories = ["Development"];
-  };
-
-  xdg.desktopEntries.idea = {
-    name = "IntelliJ IDEA";
-    exec = "idea";
-    icon = "intellijidea";
-    terminal = false;
-    type = "Application";
-    categories = ["Development"];
-  };
-
-  xdg.desktopEntries.aseprite = {
-    name = "Aseprite";
-    exec = "aseprite";
-    icon = "aseprite";
-    terminal = false;
-    type = "Application";
-    categories = ["Graphics"];
   };
 }

@@ -5,7 +5,14 @@
 #
 # This is the first slice of the hybrid model: host-level needs stay in
 # environment.systemPackages, user-owned tools live in Home Manager profiles.
-{pkgs, ...}: {
+{
+  config,
+  pkgs,
+  ...
+}: {
+  # Declares my.godot.package, the engine installed just below.
+  imports = [../../modules/home/godot.nix];
+
   # Owns EDITOR and VISUAL: defaultEditor sets both, so the editor is declared
   # by the same profile that installs it.
   programs.neovim = {
@@ -32,8 +39,7 @@
     mono
 
     # Game development
-    godot_4_6-mono
-    # godot_4_7-mono   Eventual migration
+    config.my.godot.package
     butler
     steamcmd
 
