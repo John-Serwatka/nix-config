@@ -10,7 +10,9 @@
 # imports this also imports ../services/desktop.nix, and plasma6 already sets
 # xdg.portal.enable, adds the KDE and GTK portals to extraPortals, and points
 # configPackages at plasma-workspace — which ships the portal preference file
-# that decides *which* backend answers each interface.
+# that decides *which* backend answers each interface. On hosts that also import
+# ./cosmic.nix, COSMIC adds its own portal and preference file the same way;
+# the files are keyed per desktop, so the two merge without conflict.
 #
 # This module used to repeat those and add `xdg.portal.config.common.default =
 # "*"`. That last one is worse than nothing here: "*" means "any backend that
