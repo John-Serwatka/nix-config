@@ -206,14 +206,14 @@
 in {
   home.packages = [boothDashboard pkgs.kdePackages.konsole];
 
-  # Auto-launch fullscreen when the booth-admin Plasma session starts.
+  # Auto-launch fullscreen when the booth-admin session starts (COSMIC or Plasma).
   xdg.configFile."autostart/booth-dashboard.desktop".text = ''
     [Desktop Entry]
     Type=Application
     Name=Booth Dashboard
     Exec=${dashboardCommand}
     Terminal=false
-    OnlyShowIn=KDE;
+    OnlyShowIn=KDE;COSMIC;
     X-KDE-autostart-after=panel
   '';
 

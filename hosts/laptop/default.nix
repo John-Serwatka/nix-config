@@ -20,6 +20,7 @@
     ../../modules/services/audio.nix
     ../../modules/services/avahi.nix
     ../../modules/services/desktop.nix
+    ../../modules/services/cosmic.nix
     ../../modules/services/flatpak.nix
     ../../modules/services/printing.nix
     ../../modules/services/asusd.nix
