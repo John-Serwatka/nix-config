@@ -34,6 +34,19 @@ in {
   networking.firewall.interfaces.enp42s0.allowedTCPPorts = [22];
   networking.firewall.interfaces.tailscale0.allowedTCPPorts = [22];
 
+  # Kill withrin's processes when a session ends, so a logout actually ends.
+  # With the NixOS default (false), pam_kwallet5's ksecretd outlived a COSMIC
+  # logout and held the session in `closing` indefinitely — which `status`
+  # rightly reports as `local`, so the broker could never start. It also kept
+  # user@1000 alive, and with it a Sunshine that had restarted at the greeter.
+  # withrin only: tmux/nohup under a withrin login (e.g. laptop SSH) now dies
+  # with it — use `systemd-run --user` for anything that must outlive one.
+  # logind does not restart on switch here; takes effect after a reboot.
+  services.logind.settings.Login = {
+    KillUserProcesses = true;
+    KillOnlyUsers = "withrin";
+  };
+
   services.openssh = {
     enable = true;
     openFirewall = false;
