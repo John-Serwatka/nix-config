@@ -6,7 +6,9 @@
 
 **Architecture:** The video path is always Desktop/Sunshine ↔ Moonlight client. Core only does Wake-on-LAN, polls status, and asks for start/stop through a restricted forced-command SSH dispatcher on the desktop. The desktop decides: a root supervisor (`game-broker@<request_id>.service`) runs a staged state machine that stops SDDM, starts a real PAM/logind session (`game-broker-session@<request_id>.service`, `User=withrin` + `PAMName=` + `TTYPath=`) running gamescope → Steam Gamepad UI → Sunshine on a dummy HDMI plug, and restores SDDM on any exit.
 
-**Status (2026-09-25):** Plan approved. Stage 0 partly recorded. Stage 1 switched and running on the desktop (uncommitted) with **Vulkan Video encoding, not NVENC** — see Stage 1 results. First Moonlight test (phone) streams. Remaining Stage 1 validations are pending before commit. Stage 4 must NOT be implemented yet.
+**Paused (2026-09-25), mid-Stage 3.** Stages 1–2 done; Stage 3 is deployed but its greeter validation failed (see Stage 3). To resume: switch + reboot for `KillUserProcesses`, log out, rerun `game-broker status` from core, then the remaining Stage 3 checks. Plain Sunshine → Moonlight streaming (Stage 1) does not depend on any of this.
+
+**Status (2026-09-25, earlier):** Plan approved. Stage 0 partly recorded. Stage 1 switched and running on the desktop (uncommitted) with **Vulkan Video encoding, not NVENC** — see Stage 1 results. First Moonlight test (phone) streams. Remaining Stage 1 validations are pending before commit. Stage 4 must NOT be implemented yet.
 
 ## Global Constraints
 
@@ -355,11 +357,21 @@ Pass: every Sunshine rule carries `-i enp42s0` or `-i tailscale0`, each port app
 
 ### Stage 3: Status protocol (both repos, read-only)
 
-- [ ] Same commit as enabling sshd: `sops.age.keyFile = "/home/withrin/.config/sops/age/keys.txt"; sops.age.sshKeyPaths = [];` on the desktop
-- [ ] sshd: `openFirewall = false`, port 22 on `enp42s0`/`tailscale0` only, `PasswordAuthentication = false`, `KbdInteractiveAuthentication = false`, `PermitRootLogin = "no"`, `AllowUsers = ["broker-control" "withrin"]`; withrin authorized with the **laptop** key only
-- [ ] `broker-control` system user: `restrict,command="…/game-broker-remote",from="192.168.0.125,100.109.198.88" <core key>`; dispatcher implements `status` only; **no sudo rule yet**
-- [ ] homelab: sops `desktop_broker_ssh_key`, `knownHosts.desktop`, `game-broker status` validating `protocol.major == 1`
+- [x] Same commit as enabling sshd: `sops.age.keyFile = "/home/withrin/.config/sops/age/keys.txt"; sops.age.sshKeyPaths = [];` on the desktop (`5d8c042`)
+- [x] sshd: `openFirewall = false`, port 22 on `enp42s0`/`tailscale0` only, `PasswordAuthentication = false`, `KbdInteractiveAuthentication = false`, `PermitRootLogin = "no"`, `AllowUsers = ["broker-control" "withrin"]`; withrin authorized with the **laptop** key only (`5d8c042`)
+- [x] `broker-control` system user: `restrict,command="…/game-broker-remote",from="192.168.0.125,100.109.198.88" <core key>`; dispatcher implements `status` only; **no sudo rule yet** (`bc0e5b7`)
+- [x] homelab: sops `desktop_broker_ssh_key`, `knownHosts.desktop`, `game-broker status` validating `protocol.major == 1` (homelab `ed4f38b`)
 - [ ] Validate: `/run/secrets-for-users/withrin_password` exists after switch; `status` → `local` in COSMIC, `none` at greeter, self SSH session labelled; `ssh … 'status; id'` → `unknown_verb`; `-t`, `-L`, `-D` refused; `withrin` from core refused
+  - [x] `/run/secrets-for-users/withrin_password` present after the sshd switch (21:34, root 0400)
+  - [x] `withrin` from core refused (desktop sshd, 21:37:32: `Connection closed by authenticating user withrin 192.168.0.125 [preauth]`)
+  - [ ] `unknown_verb`, `-t`/`-L`/`-D`: run from core at 21:37 (8 `broker-control` logins in the desktop's sshd log) but the output was not kept — rerun and save it
+  - [ ] `local` in COSMIC — not captured
+  - [x] Self SSH session labelled (21:41): the dispatcher's own session is `class=user type=tty remote=true self=true`, and it opens a `manager-early` `systemd-user` session for broker-control (user@ start per poll, as predicted)
+  - [ ] **`none` at greeter — FAILED (2026-09-25 21:41, core `~/status-greeter.json`): got `local`.** The classifier was right; the logout did not end:
+    - COSMIC session 2 stayed `State=closing` indefinitely (still so 7+ min later): `ksecretd --pam-login` (pam_kwallet5) was left in `session-2.scope`, and `KillUserProcesses = false` abandons the scope instead of killing it. `closing` counts as `local` by design, so every logout blocked the broker.
+    - Sunshine was running at the greeter: at logout it exited 1 (`Error reading events from display: Broken pipe`), and `Restart=on-failure` brought it back 5 s later. `graphical-session.target` never stopped (no stop logged; still active from 21:10), so `PartOf=` never fired. Logout was a crash storm (drkonqi launchers — `Requisite=graphical-session.target` — portals, kdeconnect, nextcloud, flameshot, kwallet); what exactly pinned the target is **not established**. A throwaway-unit reproduction did not show Sunshine's module-set `Wants=graphical-session.target` keeping a `StopWhenUnneeded` target up. This alone would have made ownership `inconsistent`, and it would also hold 47989 against the broker's own Sunshine.
+    - Fix, step 1: `KillUserProcesses = true`, `KillOnlyUsers = "withrin"` (`hosts/desktop/game-broker.nix`). Expected: the scope is killed, withrin's last session ends, and user@1000 (and Sunshine with it) stops after `UserStopDelaySec`. logind is not restarted by switch on this pin → **reboot**, then log out and rerun `game-broker status` from core. Only if Sunshine still survives, change the Sunshine unit — keeping `Restart=on-failure`, which recovers mid-stream crashes.
+    - Residual: with another withrin session open (laptop SSH), user@ stays up, so a restarted Sunshine could survive a COSMIC logout. That is fail-closed for the broker (`sunshine_already_running` / `inconsistent`) but would leave a paired client able to stream the greeter.
 
 ### Stage 4: Explicit broker session — NOT YET
 
