@@ -343,7 +343,7 @@ Pass: every Sunshine rule carries `-i enp42s0` or `-i tailscale0`, each port app
 ### Stage 2: Remote power (both repos)
 
 - [x] nix-config: `networking.interfaces.enp42s0.wakeOnLan.enable = true;` (2026-09-25)
-- [ ] homelab: `game-broker wake` → `wakeonlan -i 192.168.0.255 d8:43:ae:70:e6:a8`
+- [x] homelab: `game-broker wake` → `wakeonlan -i 192.168.0.255 d8:43:ae:70:e6:a8` (2026-09-25, homelab `4084f51`; deployed, woke the desktop from suspend in 11 s, journal entry under `-t game-broker`)
 - [x] After boot and after `nmcli con up "Wired connection 1"`: `sudo ethtool enp42s0 | grep Wake-on` → `g`; `/sys/class/net/enp42s0/device/power/wakeup` → `enabled`. If NM overrides, add `networking.networkmanager.settings.connection."ethernet.wake-on-lan"`.
   - [x] After boot (2026-09-25): `power/wakeup` → `enabled`; `Supports Wake-on: pumbg`, `Wake-on: g`
   - [x] After `nmcli con up "Wired connection 1"` (2026-09-25): still `g` / `enabled` — NM preserves the `.link` setting; no NM override needed
