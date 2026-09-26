@@ -1,5 +1,11 @@
 # hosts/desktop/default.nix — desktop machine configuration
-{...}: {
+{...}: let
+  # See the Sunshine firewall comment further down.
+  sunshinePorts = {
+    allowedTCPPorts = [47984 47989 48010];
+    allowedUDPPorts = [47998 47999 48000 48002 48010];
+  };
+in {
   imports = [
     ./hardware.nix
 
@@ -26,6 +32,7 @@
     ../../modules/services/networking.nix
     ../../modules/services/kdeconnect.nix
     ../../modules/services/homelab.nix
+    ../../modules/services/sunshine.nix
 
     # Hardware
     ../../modules/hardware/graphics.nix
@@ -75,6 +82,18 @@
     allowedUDPPorts = [53 67];
     allowedTCPPorts = [53];
   };
+
+  # Sunshine's stream ports (modules/services/sunshine.nix), on the house LAN
+  # and the tailnet only. From the module's offsets on base port 47989:
+  # TCP -5/0/21 and UDP 9/10/11/13/21. TCP +1 (47990, the web UI) is left out
+  # on purpose. Not the kiosk share: nothing there should stream from here.
+  #
+  # "LAN" is looser than it looks: core is a Tailscale subnet router for
+  # 192.168.0.0/24 and SNATs routed traffic, so a tailnet device using that
+  # route arrives on enp42s0 as 192.168.0.125. Sunshine's own pairing is the
+  # real access control; this only keeps the ports off other segments.
+  networking.firewall.interfaces.enp42s0 = sunshinePorts;
+  networking.firewall.interfaces.tailscale0 = sunshinePorts;
 
   # Tailscale itself is enabled in modules/services/homelab.nix, imported above,
   # along with the reason this machine joins with --accept-dns=false. It earns
