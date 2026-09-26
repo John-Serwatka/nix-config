@@ -8,6 +8,7 @@
 in {
   imports = [
     ./hardware.nix
+    ./game-broker.nix
 
     # Core
     ../../modules/core/nix.nix
@@ -94,6 +95,16 @@ in {
   # real access control; this only keeps the ports off other segments.
   networking.firewall.interfaces.enp42s0 = sunshinePorts;
   networking.firewall.interfaces.tailscale0 = sunshinePorts;
+
+  # Keep decrypting with the manual age key now that sshd is on. Without this,
+  # modules/core/sops.nix drops age.keyFile (it keys off openssh.enable) and
+  # sops-nix switches to the freshly generated SSH host key, which is not a
+  # recipient in .sops.yaml — withrin_password stops decrypting and the next
+  # activation leaves withrin with no password. Both host-key paths are emptied
+  # so exactly one identity is in play.
+  sops.age.keyFile = "/home/withrin/.config/sops/age/keys.txt";
+  sops.age.sshKeyPaths = [];
+  sops.gnupg.sshKeyPaths = [];
 
   # Wake-on-LAN (magic packet) on the onboard NIC, so core can power this
   # machine up for a stream. Emitted as a udev .link file, which applies under
