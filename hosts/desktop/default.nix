@@ -95,6 +95,12 @@ in {
   networking.firewall.interfaces.enp42s0 = sunshinePorts;
   networking.firewall.interfaces.tailscale0 = sunshinePorts;
 
+  # Wake-on-LAN (magic packet) on the onboard NIC, so core can power this
+  # machine up for a stream. Emitted as a udev .link file, which applies under
+  # NetworkManager too. Needs ErP Ready = Disabled and Resume By PCI-E =
+  # Enabled in the BIOS, or the NIC has no standby power in S5.
+  networking.interfaces.enp42s0.wakeOnLan.enable = true;
+
   # Tailscale itself is enabled in modules/services/homelab.nix, imported above,
   # along with the reason this machine joins with --accept-dns=false. It earns
   # its keep here too: it is what lets this machine reach the kiosks by address
