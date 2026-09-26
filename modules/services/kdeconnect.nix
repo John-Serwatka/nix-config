@@ -1,6 +1,4 @@
 #modules/services/kdeconnect.nix
-{...}:
-
-{
-    programs.kdeconnect.enable = true;
+{...}: {
+  programs.kdeconnect.enable = true;
 }
