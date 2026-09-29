@@ -7,6 +7,7 @@
   environment.systemPackages = with pkgs; [
     usbutils # lsusb
     lm_sensors # hardware temperature monitoring
+    pavucontrol
     # udisks is not listed: services.udisks2 (enabled by Plasma) installs it,
     # and pkgs.udisks is the same derivation as pkgs.udisks2.
   ];
