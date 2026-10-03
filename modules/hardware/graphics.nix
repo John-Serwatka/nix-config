@@ -43,6 +43,16 @@ in {
       services.xserver.videoDrivers = mkDefault defaultVideoDrivers.${cfg.vendor};
     }
 
+    (mkIf (cfg.vendor == "amd") {
+      # Mesa already supplies GL, Vulkan (RADV) and VA-API for radeonsi, so the
+      # only real gap is OpenCL: nothing in the default stack ships an ICD, so
+      # clinfo comes up empty and Krita/Blender/darktable silently fall back to
+      # CPU. rocmPackages.clr.icd is the ICD alone, not the full ROCm stack.
+      hardware.graphics.extraPackages = with pkgs; [
+        rocmPackages.clr.icd
+      ];
+    })
+
     (mkIf (cfg.vendor == "intel") {
       # VA-API drivers: intel-media-driver (iHD) covers Broadwell and newer,
       # intel-vaapi-driver (i965) covers older generations.
