@@ -75,9 +75,10 @@ Run as root via a scratchpad script, on the real filesystem:
 - [x] Commit the two files (repo style: small, scoped, 1–2 line subject)
 
 ### Stage 2 — Hibernation (needs a reboot; `resume_offset` is a kernel param)
-- [ ] Reboot, then confirm `resume_offset=60335360` and `resume=/dev/disk/by-uuid/1bdf…` in `/proc/cmdline`
-- [ ] `systemctl hibernate`, resume, and check the journal for a clean `PM: hibernation exit`
-- [ ] Verify amdgpu survives hibernate/resume in `AsusMuxDgpu` — this is the most likely failure, since the dGPU is driving the panel
+- [x] Reboot, then confirm `resume_offset=60335360` and `resume=/dev/disk/by-uuid/1bdf…` in `/proc/cmdline` — confirmed 2026-10-03 00:48 boot, generation 55
+- [x] **Blocker found and diagnosed:** `/sys/power/disk` = `[disabled]`, logind `CanHibernate` = `na`. Cause: **Bitwarden desktop** (autostarted, `app-bitwarden-*.scope`) holds `memfd_secret` memory, and the kernel refuses hibernation while any secretmem exists. Quitting it restored `disk` in `/sys/power/state` and `CanHibernate=yes`. A pre-sleep hook can't fix this — logind rejects the request before hooks run. **Resolved:** removed Bitwarden's autostart (`~/.config/autostart/bitwarden.desktop`, written by the app's own "Start automatically on login" setting — not in nix). Use the browser extension day to day; if the desktop app is open, hibernation is blocked until it's quit. Don't re-enable that setting in the app
+- [x] `systemctl hibernate`, resume, and check the journal for a clean `PM: hibernation exit` — 2026-10-03 00:53 (Bitwarden quit first). Restore path confirmed: `Waking up from system sleep state S4`, USB root hubs `lost power`, `hibernation exit`. Snapshot was ~6 GB, 25 s to preallocate
+- [x] Verify amdgpu survives hibernate/resume in `AsusMuxDgpu` — both GPUs `SMU is resumed successfully`, no amdgpu errors, `card1-eDP-1` connected+enabled. One stray `NMI received for unknown reason 2d` 15 s after resume; watch for repeats
 - [ ] Test the real path: close the lid on battery, wait past `HibernateDelaySec=45min`, confirm it transitioned suspend → hibernate
 - [ ] Confirm lid-on-AC suspends and lid-while-docked is ignored
 
@@ -92,6 +93,8 @@ Run as root via a scratchpad script, on the real filesystem:
 ### Stage 4 — Validate the rest
 - [ ] `clinfo` lists a platform (was empty) — confirms the OpenCL ICD
 - [ ] **Test a real DisplayLink dock.** Attach it, confirm `dlm.service` is pulled in by the udev rule and displays light up. Until this passes, assume the dock is broken at a venue
+  - [x] **Cold-plug passes** (2026-10-03): Belkin USB-C dock `17e9:6000` attached at boot; `dlm.service` started at 00:48:15 with empty `WantedBy` (so the udev rule pulled it in, not `multi-user.target`); two evdi outputs at 1920x1080@60. Also reconnected cleanly after hibernate
+  - [ ] Hot-plug: unplug, plug back in with the system running, confirm displays return
 - [ ] `fwupdmgr refresh && fwupdmgr get-upgrades` — BIOS is 3y3m old; decide on the update separately from this work
 
 ## Risks
