@@ -27,6 +27,7 @@
     };
     idea = {
       package = pkgs.jetbrains.idea;
+      sourceName = "intellij-idea";
       icon = "intellijidea";
     };
     aseprite = {
