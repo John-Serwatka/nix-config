@@ -153,8 +153,8 @@ kiosk force-disabled — for doing maintenance on the box itself.
 
 The fleet used to be three boxes. The Beelink SER left it: that machine was
 reinstalled as **`core`, the homelab server**, and is the house's core
-infrastructure now — Caddy, Actual Budget, Uptime Kuma and Dashy today, with the
-rest of the Pi's services migrating onto it. It lives on the LAN behind a DHCP
+infrastructure now: Nextcloud, Vaultwarden, Actual Budget, FreeScout, Uptime
+Kuma and Dashy behind Caddy. `pi-server` is decommissioned. It lives on the LAN behind a DHCP
 reservation and does not travel to events.
 
 **`core` is not configured from this flake.** It has its own repository, pinned
@@ -162,12 +162,14 @@ to stable `nixos-26.05` where this one tracks `nixos-unstable`. There is no
 `beelink` host here any more — output, `hosts/beelink/` and age recipient are
 all gone.
 
-Desktop and laptop access live in `modules/services/homelab.nix`. It installs the
-private Caddy CAs and resolves `core`, `dash.home.arpa` and `status.home.arpa`:
-the desktop uses core's LAN address (`192.168.0.125`), while the travelling laptop
-uses its Tailscale address (`100.109.198.88`). The laptop needs Tailscale connected
-even at home for these names. Recheck the tailnet address if core is removed and
-rejoined. Public service domains continue using public DNS.
+Desktop and laptop access live in `modules/services/homelab.nix`. It pins only
+the `core` hostname: the desktop uses core's LAN address (`192.168.0.125`), while
+the travelling laptop uses its Tailscale address (`100.109.198.88`). Recheck the
+tailnet address if core is removed and rejoined. Service names
+(`*.johnserwatka.com`, `desk.pocketlorestudios.com`) need nothing here. Public
+DNS points them at core's tailnet address, the router overrides them to the LAN
+address at home, and all carry public certificates. See the homelab repo's
+`docs/runbook.md`.
 
 Use `ssh core` for the host's preferred route, `ssh core-remote` to force
 Tailscale, or `ssh core-lan` to force the LAN. All three default to the primary
@@ -180,7 +182,7 @@ must be online, permit SSH over Tailscale and authorize the workstation's public
 key (see `lib/ssh-keys.nix`); those server settings belong to core's own repo.
 The workstation changes do not enroll an unauthenticated machine: run
 `sudo tailscale up` once if needed. Validate with `tailscale ping core`,
-`ssh core-remote hostname`, and `https://dash.home.arpa` in Firefox.
+`ssh core-remote hostname`, and `https://dash.johnserwatka.com` in Firefox.
 
 ### Remote access (Tailscale + LAN)
 

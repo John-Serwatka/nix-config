@@ -21,17 +21,19 @@ in {
     # once by hand:
     #   sudo tailscale up --accept-dns=false
     #
-    # --accept-dns=false deliberately: the desktop shares a LAN with pi-server,
-    # and letting tailscale take over resolution would route DNS away from it.
-    # The cost is no MagicDNS, which the networking.hosts entries replace.
+    # --accept-dns=false deliberately: the tailnet has no MagicDNS or
+    # nameservers to offer, and with an exit node selected "use Tailscale DNS"
+    # sends every lookup to the exit node's peer API, which core's firewall
+    # does not answer. The one name that needs pinning is `core` itself (below);
+    # every service name resolves through public DNS (core's tailnet IP) or
+    # the router (its LAN IP).
     services.tailscale.enable = true;
 
-    security.pki.certificateFiles = [
-      ../../certs/caddy-ca.crt
-      ../../certs/core-caddy-ca.crt
-    ];
-
-    networking.hosts.${coreAddress} = ["core" "dash.home.arpa" "status.home.arpa"];
+    # No private CAs are trusted any more. pi-server's and core's Caddy
+    # internal CAs only ever signed `tls internal` names, and the last of those
+    # (dash/status.home.arpa) were retired on core on 2026-10-05. Every name
+    # core serves now has a public Let's Encrypt certificate.
+    networking.hosts.${coreAddress} = ["core"];
 
     # System defaults leave each user's existing Git hosts and SSH identities
     # intact. `core` follows the host's networking.hosts entry above; the two
