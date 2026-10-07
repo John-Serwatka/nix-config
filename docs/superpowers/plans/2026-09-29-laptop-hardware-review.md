@@ -83,19 +83,22 @@ Run as root via a scratchpad script, on the real filesystem:
 - [ ] Confirm lid-on-AC suspends and lid-while-docked is ignored
 
 ### Stage 3 — Actually stop the dGPU drain
-- [ ] `supergfxctl -g` to confirm the daemon reads the mode
-- [ ] `supergfxctl -m Hybrid`, then **reboot** (MUX changes need one)
-- [ ] Re-check `card0`/`card1`: the internal eDP should move to the iGPU (`07:00.0`)
-- [ ] Confirm `runtime_suspended_time` on `0000:03:00.0` is now non-zero and climbing
-- [ ] Re-measure `power1_average` at idle and compare against the 6 W baseline
+- [x] `supergfxctl -g` to confirm the daemon reads the mode — `AsusMuxDgpu`
+- [x] ~~`supergfxctl -m Hybrid`~~ — **doesn't work from here.** With the hardware MUX on the dGPU, `supergfxctl -s` offers only `[AsusMuxDgpu]`. The MUX is a firmware attribute: `/sys/class/firmware-attributes/asus-armoury/attributes/gpu_mux_mode` (`0` = dGPU drives the panel, `1` = iGPU/hybrid; also `/sys/devices/platform/asus-nb-wmi/gpu_mux_mode`). Flip it to `1` (as root, or via ROG Control Center), then **reboot**
+- [x] **MUX switch queued 2026-10-03 01:02** via `asusctl armoury set gpu_mux_mode 1` — works as the user, no sudo (goes through `asusd` over D-Bus). asusd 6.5.0 doesn't write it immediately: it logs `Queueing GPU attribute gpu_mux_mode = 1 for delayed apply`, and `asus-shutdown.service` writes it on the way down. Until the reboot, sysfs still reads `0`. To cancel before rebooting: `asusctl armoury set gpu_mux_mode 0`
+- [x] Reboot, then confirm `gpu_mux_mode` reads `1` — 2026-10-03 01:05 boot, reads `1`. After the switch, asusd logs `No saved value for attribute gpu_mux_mode: skipping`, so it won't flip back on its own
+- [x] After reboot, `supergfxctl -s` should offer `Hybrid`/`Integrated`; `supergfxctl -g` should read `Hybrid` — `-s` gives `[Integrated, Hybrid, AsusMuxDgpu]`, `-g` gives `Hybrid`
+- [x] Re-check `card0`/`card1`: the internal eDP should move to the iGPU (`07:00.0`) — panel is now `card4-eDP-2` on `07:00.0`; `card1-eDP-1` (dGPU) is disconnected. Card numbers changed (dGPU `card1`, evdi `card2`/`card3`, iGPU `card4`), so don't hardcode them
+- [x] Confirm `runtime_suspended_time` on `0000:03:00.0` is now non-zero and climbing — `suspended`, and it climbs about 5 s per 5 s while `runtime_active_time` holds steady. **Gotcha:** reading the dGPU's hwmon `power1_average` wakes it (it showed `active` right after a read), so don't poll it while checking suspend
+- [ ] Re-measure idle power and compare against the 6 W baseline. dGPU `power1_average` can't be used for this now: the read wakes the card (it read 4 W just after being woken). Measure the whole system instead, using `BAT*/power_now` on battery at idle. Not done yet: the laptop was on AC (`Charging`)
 - [ ] Decide whether `Integrated` is wanted on battery, or whether `Hybrid` is enough
 
 ### Stage 4 — Validate the rest
-- [ ] `clinfo` lists a platform (was empty) — confirms the OpenCL ICD
+- [x] `clinfo` lists a platform (was empty) — confirms the OpenCL ICD. 2026-10-03: `AMD Accelerated Parallel Processing`, devices `gfx1032` (dGPU) and `gfx1035` (iGPU). `clinfo` isn't installed; ran via `nix run nixpkgs#clinfo -- -l`
 - [ ] **Test a real DisplayLink dock.** Attach it, confirm `dlm.service` is pulled in by the udev rule and displays light up. Until this passes, assume the dock is broken at a venue
   - [x] **Cold-plug passes** (2026-10-03): Belkin USB-C dock `17e9:6000` attached at boot; `dlm.service` started at 00:48:15 with empty `WantedBy` (so the udev rule pulled it in, not `multi-user.target`); two evdi outputs at 1920x1080@60. Also reconnected cleanly after hibernate
   - [ ] Hot-plug: unplug, plug back in with the system running, confirm displays return
-- [ ] `fwupdmgr refresh && fwupdmgr get-upgrades` — BIOS is 3y3m old; decide on the update separately from this work
+- [x] `fwupdmgr refresh && fwupdmgr get-upgrades` — BIOS is 3y3m old; decide on the update separately from this work. 2026-10-03: **ASUS doesn't ship this BIOS on LVFS** (`System Firmware` has no updates), so a BIOS update means EZ Flash from USB — separate decision. Only offer is the Secure Boot dbx `20260402` → `20260707`, which is moot while Secure Boot is disabled
 
 ## Risks
 
